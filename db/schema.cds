@@ -21,6 +21,7 @@ entity FastConditionContracts: cuid, managed {
   ProductFilter: String;
   Extension: Boolean;
   ExtensionPeriod: String;
+  SAPID: String;
   hasNewMaterialNumber: Boolean;
   hasActiveContracts: Boolean;
   hasUpdatedPVL: Boolean;
