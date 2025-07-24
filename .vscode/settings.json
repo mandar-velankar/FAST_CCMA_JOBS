@@ -1,0 +1,9 @@
+{
+    "actions": [
+        {
+            "id": "openReadmeFile",
+            "actionType": "FILE",
+            "uri": "file:///c:/Projects/F_TNDR_CAG_FAST_CCMA_JOBS/.gen/generation.log"
+        }
+    ]
+}
