@@ -1,0 +1,73 @@
+_schema-version: '3.1'
+ID: F_TNDR_CAG_FAST_CCMA_JOBS
+version: 1.0.0
+description: "A simple CAP project."
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+modules:
+  - name: F_TNDR_CAG_FAST_CCMA_JOBS-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+      readiness-health-check-type: http
+      readiness-health-check-http-endpoint: /health
+    build-parameters:
+      builder: npm
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: uaa_FAST
+      - name: FAST-logging
+      - name: F_TNDR_CAG_FAST_CCMA_JOBS-db
+
+  - name: F_TNDR_CAG_FAST_CCMA_JOBS-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: F_TNDR_CAG_FAST_CCMA_JOBS-db
+
+  - name: F_TNDR_CAG_FAST_CCMA_JOBS
+    type: approuter.nodejs
+    path: app/router
+    parameters:
+      keep-existing-routes: true
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv-api # must be used in xs-app.json as well
+          url: ~{srv-url}
+          forwardAuthToken: true
+      - name: uaa_FAST
+      - name: FAST-logging
+
+resources:
+  - name: uaa_FAST
+    parameters:
+      path: ./xs-security.json
+      service-plan: application
+      service: xsuaa
+    type: org.cloudfoundry.managed-service
+  - name: F_TNDR_CAG_FAST_CCMA_JOBS-db
+    type: org.cloudfoundry.existing-service
+    properties:
+      hdi-container-name: 'F_TNDR_CAG_FAST_CCMA_BACKEND-db'
+  - name: FAST-logging
+    type: org.cloudfoundry.managed-service
+    parameters:
+       service: application-logs
+       service-plan: lite
+      

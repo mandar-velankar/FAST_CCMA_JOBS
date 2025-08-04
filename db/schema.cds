@@ -180,6 +180,14 @@ entity PriceConditionFOC: cuid, managed, temporal{
 }
 
 @cds.persistence.exists
+entity SettlementsDate: managed{
+  key CCMContractID          : UUID;
+  key FromDate               : Date;
+  ToDate                     : Date;
+  SettlementID               : String; 
+}
+
+@cds.persistence.exists
 entity APIDefinition: cuid{
     Provider            : String; 
     Host                : String;
@@ -209,4 +217,8 @@ entity APIBody: cuid{
   Source: String;
   Target: String;
   APIDefinition: Association to APIDefinition;
+}
+entity SchedulerJobConfig: cuid , managed{
+    JobName : String;
+    JobTime : String;
 }

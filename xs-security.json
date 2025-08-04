@@ -1,0 +1,374 @@
+{
+  "xsappname": "FAST",
+  "tenant-mode": "dedicated",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_admin",
+      "description": "f_tndr_cag_admin"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_bankguarantees_user",
+      "description": "f_tndr_cag_bankguarantees_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_technical_user",
+      "description": "f_tndr_cag_technical_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_tnd_user",
+      "description": "f_tndr_cag_tnd_user"
+    },
+	{
+        "name": "$XSAPPNAME.f_tndr_cag_brcontracting_user",
+        "description": "f_tndr_cag_brcontracting_user"
+     },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_createopportunity_user",
+      "description": "f_tndr_cag_createopportunity_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_epa_user",
+      "description": "f_tndr_cag_epa_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_ext_user",
+      "description": "f_tndr_cag_ext_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_mdm_user",
+      "description": "f_tndr_cag_mdm_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_ppa_user",
+      "description": "f_tndr_cag_ppa_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_priceagreements_user",
+      "description": "f_tndr_cag_priceagreements_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_salesopportunity_user",
+      "description": "f_tndr_cag_salesopportunity_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_ctr_user",
+      "description": "f_tndr_cag_ctr_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_cpi_user",
+      "description": "f_tndr_cag_cpi_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_consumerprice_user",
+      "description": "f_tndr_cag_consumerprice_user"
+    },
+	{
+		"name": "$XSAPPNAME.f_tndr_cag_cogs_user",
+		"description": "f_tndr_cag_cogs_user"
+	},
+	{
+        "name": "$XSAPPNAME.f_tndr_cag_spaintenderview_user",
+        "description": "f_tndr_cag_spaintenderview_user"
+    },
+	{
+      "name": "$XSAPPNAME.f_tndr_cag_Pharmatenderview_user",
+      "description": "f_tndr_cag_Pharmatenderview_user"
+	   },
+	  {
+      "name": "$XSAPPNAME.f_tndr_cag_Radiologytenderview_user",
+      "description": "f_tndr_cag_Radiologytenderview_user"
+	  },
+    {   
+        "name": "$XSAPPNAME.f_tndr_cag_meatenderview_user",
+        "description": "f_tndr_cag_meatenderview_user"
+    },
+    {
+        "name": "$XSAPPNAME.f_tndr_cag_whcproposalcreator_user",
+        "description": "f_tndr_cag_whcproposalcreator_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_consumerprice_user",
+      "description": "f_tndr_cag_consumerprice_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tnndr_cag_standardtenderdownload_user",
+      "description": "f_tnndr_cag_standardtenderdownload_user"
+    },
+    {
+        "name": "$XSAPPNAME.f_tndr_cag_whcapprover_user",
+        "description": "f_tndr_cag_whcapprover_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_standardtender_user",
+      "description": "f_tndr_cag_standardtender_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_consumerprice_user",
+      "description": "f_tndr_cag_consumerprice_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tnndr_cag_standardtenderdownload_user",
+      "description": "f_tnndr_cag_standardtenderdownload_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tnndr_cag_standardtenderzuelligextract_user",
+      "description": "f_tnndr_cag_standardtenderzuelligextract_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_distributormanagement_user",
+      "description": "f_tndr_cag_distributormanagement_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_distributormanagementexclusiveaccess_user",
+      "description": "f_tndr_cag_distributormanagementexclusiveaccess_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_standardtenderlimitedpricingtabaccess_user",
+      "description": "f_tndr_cag_standardtenderlimitedpricingtabaccess_user"
+    }
+  ],
+  "attributes": [],
+  "role-templates": [
+    {
+      "name": "f_tndr_cag_admin",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_admin"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_bankguarantees_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_bankguarantees_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_technical_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_technical_user"
+      ],
+      "attribute-references": []
+    },
+	{
+        "name": "f_tndr_cag_brcontracting_user",
+        "description": "generated",
+        "scope-references": [
+          "$XSAPPNAME.f_tndr_cag_brcontracting_user"
+        ],
+        "attribute-references": []
+      },
+    { 
+      "name": "f_tndr_cag_tnd_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_tnd_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_createopportunity_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_createopportunity_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_epa_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_epa_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_ext_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_ext_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_mdm_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_mdm_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_ppa_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_ppa_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_priceagreements_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_priceagreements_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_salesopportunity_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_salesopportunity_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_ctr_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_ctr_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_cpi_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_cpi_user"
+      ],
+      "attribute-references": []
+    },
+	{
+        "name": "f_tndr_cag_cogs_user",
+        "description": "generated",
+        "scope-references": [
+          "$XSAPPNAME.f_tndr_cag_cogs_user"
+        ],
+        "attribute-references": []
+    },
+    {
+        "name": "f_tndr_cag_spaintenderview_user",
+        "description": "generated",
+        "scope-references": [
+          "$XSAPPNAME.f_tndr_cag_spaintenderview_user"
+        ],
+        "attribute-references": []
+    },
+	{
+      "name": "f_tndr_cag_Pharmatenderview_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_Pharmatenderview_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_Radiologytenderview_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_Radiologytenderview_user"
+      ],
+      "attribute-references": []
+    },
+    {   
+        "name": "f_tndr_cag_meatenderview_user",
+        "description": "generated",
+        "scope-references": [
+          "$XSAPPNAME.f_tndr_cag_meatenderview_user"
+        ],
+        "attribute-references": []
+    },
+    {
+        "name": "f_tndr_cag_whcproposalcreator_user",
+        "description": "generated",
+        "scope-references": [
+          "$XSAPPNAME.f_tndr_cag_whcproposalcreator_user"
+        ],
+        "attribute-references": []
+    },
+    {
+        "name": "f_tndr_cag_whcapprover_user",
+        "description": "generated",
+        "scope-references": [
+          "$XSAPPNAME.f_tndr_cag_whcapprover_user"
+        ],
+        "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_consumerprice_user",
+      "description": "generated",							   
+      "scope-references": [				 
+        "$XSAPPNAME.f_tndr_cag_consumerprice_user"												 
+      ],  
+      "attribute-references": []
+    },
+    {
+      "name": "f_tnndr_cag_standardtenderdownload_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tnndr_cag_standardtenderdownload_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_standardtender_user",
+      "description": "generated",							   
+      "scope-references": [				 
+        "$XSAPPNAME.f_tndr_cag_standardtender_user"												 
+      ],  
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tnndr_cag_standardtenderdownload_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tnndr_cag_standardtenderdownload_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tnndr_cag_standardtenderzuelligextract_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tnndr_cag_standardtenderzuelligextract_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tndr_cag_distributormanagement_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_distributormanagement_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tndr_cag_distributormanagementexclusiveaccess_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_distributormanagementexclusiveaccess_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_standardtenderlimitedpricingtabaccess_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_standardtenderlimitedpricingtabaccess_user"
+      ],
+      "attribute-references": []
+    }
+    
+  ],
+  "oauth2-configuration": {
+    "redirect-uris": [
+      "https://*.hana.ondemand.com/**",
+      "https://*.eu10.applicationstudio.cloud.sap/**",
+      "https://*.applicationstudio.cloud.sap/**",
+      "http://localhost:*/**"
+    ]
+  }
+}

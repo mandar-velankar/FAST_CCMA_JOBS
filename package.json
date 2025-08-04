@@ -7,14 +7,66 @@
   "private": true,
   "dependencies": {
     "@sap/cds": "^7",
-    "express": "^4"
+    "express": "^4",
+    "@sap/xssec": "^3",
+    "@sap/cds-hana": "^2",
+    "@sap-cloud-sdk/core": "^1.54.2",
+    "@sap-cloud-sdk/http-client": "^3.9.0",
+    "@sap/logging": "^6.1.1",
+    "@sap/xsenv": "^3.4.0",
+    "axios": "^0.21.1",
+    "cfenv": "^1.2.4",
+    "compression": "^1.7.4",
+    "cron": "^1.8.2",
+    "cron-es6": "^1.0.3",
+    "cron-job-manager": "^2.2.1",
+    "handlebars": "^4.7.6",
+    "moment": "^2.29.4",
+    "n2words": "1.15.0",
+    "passport": "^0.6.0",
+    "piscina": "^3.2.0",
+    "qs": "^6.10.1",
+    "ramda": "^0.27.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^1",
+    "@sap/cds-dk": "^7",
     "@sap/eslint-plugin-cds": "^3",
     "eslint": "^9"
   },
   "scripts": {
-    "start": "cds-serve"
+    "start": "cds-serve",
+    "watch": "cds watch",
+    "watch:hybrid": "cds bind --exec npm run watch --profile hybrid",
+    "watch:mv": "cds bind --exec npm run watch --profile mandar",
+    "build:cds": "cds build --production",
+    "undeploy": "cf undeploy F_TNDR_CAG_FAST_CCMA_JOBS --delete-services --delete-service-keys --delete-service-brokers",
+    "deploy:sql": "cds deploy --to sqlite",
+    "deploy:hana:hybrid": "cds bind --exec cds deploy --to hana --profile hybrid",
+    "deploy:hana:mv": "cds bind --exec cds deploy --to hana --profile mandar",
+    "build": "rimraf resources mta_archives && mbt build --mtar archive",
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
+  },
+  "cds": {
+    "hana": {
+      "deploy-format": "hdbtable"
+    },
+    "requires": {
+      "db": {
+        "kind": "hana-cloud"
+      },
+      "uaa": {
+        "kind": "xsuaa"
+      },
+      "auth": {
+        "kind": "jwt-auth"
+      },
+      "[development]": {
+        "auth": {
+          "kind": "mocked"
+        }
+      }
+    }
   }
 }
