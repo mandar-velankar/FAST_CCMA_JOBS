@@ -8,7 +8,7 @@ build-parameters:
   before-all:
     - builder: custom
       commands:
-        - npm ci
+        - npm i
         - npx cds build --production
 modules:
   - name: F_TNDR_CAG_FAST_CCMA_JOBS-srv
@@ -37,22 +37,22 @@ modules:
     requires:
       - name: F_TNDR_CAG_FAST_CCMA_JOBS-db
 
-  - name: F_TNDR_CAG_FAST_CCMA_JOBS
-    type: approuter.nodejs
-    path: app/router
-    parameters:
-      keep-existing-routes: true
-      disk-quota: 256M
-      memory: 256M
-    requires:
-      - name: srv-api
-        group: destinations
-        properties:
-          name: srv-api # must be used in xs-app.json as well
-          url: ~{srv-url}
-          forwardAuthToken: true
-      - name: uaa_FAST
-      - name: FAST-logging
+  # - name: F_TNDR_CAG_FAST_CCMA_JOBS
+  #   type: approuter.nodejs
+  #   path: app/router
+  #   parameters:
+  #     keep-existing-routes: true
+  #     disk-quota: 256M
+  #     memory: 256M
+  #   requires:
+  #     - name: srv-api
+  #       group: destinations
+  #       properties:
+  #         name: srv-api # must be used in xs-app.json as well
+  #         url: ~{srv-url}
+  #         forwardAuthToken: true
+  #     - name: uaa_FAST
+  #     - name: FAST-logging
 
 resources:
   - name: uaa_FAST
