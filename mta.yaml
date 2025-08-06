@@ -27,7 +27,7 @@ modules:
     requires:
       - name: uaa_FAST
       - name: FAST-logging
-      - name: F_TNDR_CAG_FAST_CCMA_JOBS-db
+      - name: F_TNDR_CAG_FAST_CCMA_BACKEND-db
 
   - name: F_TNDR_CAG_FAST_CCMA_JOBS-db-deployer
     type: hdb
@@ -35,7 +35,7 @@ modules:
     parameters:
       buildpack: nodejs_buildpack
     requires:
-      - name: F_TNDR_CAG_FAST_CCMA_JOBS-db
+      - name: F_TNDR_CAG_FAST_CCMA_BACKEND-db
 
   # - name: F_TNDR_CAG_FAST_CCMA_JOBS
   #   type: approuter.nodejs
@@ -61,10 +61,10 @@ resources:
       service-plan: application
       service: xsuaa
     type: org.cloudfoundry.managed-service
-  - name: F_TNDR_CAG_FAST_CCMA_JOBS-db
+  - name: F_TNDR_CAG_FAST_CCMA_BACKEND-db
     type: org.cloudfoundry.existing-service
     properties:
-      hdi-container-name: 'F_TNDR_CAG_FAST_CCMA_BACKEND-db'
+      hdi-container-name: F_TNDR_CAG_FAST_CCMA_BACKEND-db
   - name: FAST-logging
     type: org.cloudfoundry.managed-service
     parameters:
