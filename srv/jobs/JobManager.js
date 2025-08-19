@@ -1,7 +1,6 @@
 const JobFactory = require('./JobFactory');
 const CronJobManager = require('cron-job-manager');
 const cds = require('@sap/cds');
-const jobScheduler = require("./scheduler");
 
 class JobManager {
 
