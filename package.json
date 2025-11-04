@@ -56,6 +56,12 @@
       "db": {
         "kind": "hana-cloud"
       },
+      "FASTBACKEND_API": {
+        "kind": "rest",
+        "credentials": {
+          "destination": "FAST_API_OAUTH"
+        }
+      },
       "uaa": {
         "kind": "xsuaa"
       },

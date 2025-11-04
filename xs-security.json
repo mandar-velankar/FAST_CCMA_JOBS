@@ -125,6 +125,30 @@
     {
       "name": "$XSAPPNAME.f_tndr_cag_standardtenderlimitedpricingtabaccess_user",
       "description": "f_tndr_cag_standardtenderlimitedpricingtabaccess_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_admincogsview_user",
+      "description": "f_tndr_cag_admincogsview_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_wpppowerapproveraccess_user",
+      "description": "f_tndr_cag_wpppowerapproveraccess_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_ppppowerapproveraccess_user",
+      "description": "f_tndr_cag_ppppowerapproveraccess_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_nlpricesmanagement_user",
+      "description": "f_tndr_cag_nlpricesmanagement_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_claims_user",
+      "description": "f_tndr_cag_claims_user"
+    },
+    {
+      "name": "$XSAPPNAME.f_tndr_cag_ccma_user",
+      "description": "f_tndr_cag_ccma_user"
     }
   ],
   "attributes": [],
@@ -358,6 +382,54 @@
       "description": "generated",
       "scope-references": [
         "$XSAPPNAME.f_tndr_cag_standardtenderlimitedpricingtabaccess_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tndr_cag_admincogsview_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_admincogsview_user"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "f_tndr_cag_wpppowerapproveraccess_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_wpppowerapproveraccess_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tndr_cag_ppppowerapproveraccess_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_ppppowerapproveraccess_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tndr_cag_nlpricesmanagement_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_nlpricesmanagement_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tndr_cag_claims_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_claims_user"
+      ],
+      "attribute-references": []
+    },
+    {		  
+      "name": "f_tndr_cag_ccma_user",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.f_tndr_cag_ccma_user"
       ],
       "attribute-references": []
     }

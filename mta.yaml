@@ -15,9 +15,7 @@ modules:
     type: nodejs
     path: gen/srv
     parameters:
-      buildpack: nodejs_buildpack
-      readiness-health-check-type: http
-      readiness-health-check-http-endpoint: /health
+      health-check-timeout: 120
     build-parameters:
       builder: npm
     provides:
@@ -32,8 +30,6 @@ modules:
   - name: F_TNDR_CAG_FAST_CCMA_JOBS-db-deployer
     type: hdb
     path: gen/db
-    parameters:
-      buildpack: nodejs_buildpack
     requires:
       - name: F_TNDR_CAG_FAST_CCMA_BACKEND-db
 
