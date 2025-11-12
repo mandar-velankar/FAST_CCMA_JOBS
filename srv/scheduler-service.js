@@ -1,6 +1,7 @@
 const cds = require('@sap/cds');
 const JobManager = require("./jobs/JobManager");
-
+const AutoExtendContractsJob = require("./jobs/AutoExtendContractsJob");
+const CCMContractsCreatedNotificationMailJob = require("./jobs/CCMContractsCreatedNotificationMailJob");
 module.exports = (srv) => {
 
 
@@ -32,4 +33,12 @@ module.exports = (srv) => {
         else throw new Error("Wrong action");
         return JobManager.getJobs();
     });
+    /**Uncomment to test the job manually **/
+
+    //  srv.on('startTestJob', async (req) => {
+    //     JobManager.registerJobs();
+    //      new AutoExtendContractsJob("test","*").onTick();
+    //      //new CCMContractsCreatedNotificationMailJob("test","*").onTick();
+    //      return "Test Job Started";
+    // });
 };

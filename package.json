@@ -49,28 +49,13 @@
     "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
   },
   "cds": {
-    "hana": {
-      "deploy-format": "hdbtable"
-    },
     "requires": {
-      "db": {
-        "kind": "hana-cloud"
-      },
+      "auth": "xsuaa",
+      "html5-runtime": true,
       "FASTBACKEND_API": {
         "kind": "rest",
         "credentials": {
           "destination": "FAST_API_OAUTH"
-        }
-      },
-      "uaa": {
-        "kind": "xsuaa"
-      },
-      "auth": {
-        "kind": "jwt-auth"
-      },
-      "[development]": {
-        "auth": {
-          "kind": "mocked"
         }
       }
     }
