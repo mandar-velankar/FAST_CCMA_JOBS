@@ -283,6 +283,7 @@ entity ConditionContractsLog : cuid {
   Synchronized      : Boolean default false;       
   createdAt         : Date;
   createdBy         : String;
+  ErrorMessage     : String;
   CCMContract: UUID;
 }
 entity SchedulerJobConfig: cuid , managed{
