@@ -5,7 +5,6 @@ const axios = require('axios');
 const qs = require("qs");
 const cfenv = require("cfenv");
 const Handlebars = require("handlebars");
-
 module.exports = class AutoExtendContractsJob extends BaseJob {
 
      constructor(jobName, jobTime) {
@@ -22,16 +21,42 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
 
         try {
             this.db = await cds.connect.to('db'); 
-            let contractsIds = await this.updateContractsExpiration();
 
-            await this.updateExistingContract(contractsIds);
+            // 1. Fetch contracts to be extended
+            const contracts = await this.getContractsToExtend();
+            if (contracts.length === 0) {
+                console.log("No contracts need extension today.");
+                return;
+            }
 
-            console.log('Processing mails for Extend Expiry Contracts started ...');
- 
+            const extendedContractsInfo = [];
+
+            for (const contract of contracts) {
+
+                let newEndDate = this.calculateNewEndDate(contract);
+                if (!newEndDate) continue;
+
+                // 2a. Synchronize contract with SAP
+                await this.updateExistingContract(contract, newEndDate);
+
+                // Save the sync result for later
+                extendedContractsInfo.push({
+                    ID: contract.ID,
+                    ContractNumber: contract.ContractNumber,
+                    NewEndDate: newEndDate,
+                    CountryCode: contract.CountryCode
+                });
+
+                // 3. Update contract end date in DB
+                await this.persistNewEndDate(contract.ID, newEndDate);
+            }
+
+            const extendedContracts = await this.loadExtendedContractDetails(extendedContractsInfo.map(c => c.ID));
+            
+            console.log('Processing mails for Extend Expiry Contracts started ...');  
+            
             const templateId = 'ContractExtendExpiryMail';
-            const mailTemplate = await this.getMailTemplate(templateId);
-
-            let extendedContracts = await this.getContractsExtended(contractsIds);                 
+            const mailTemplate = await this.getMailTemplate(templateId);   
 
             if (extendedContracts && extendedContracts.length > 0) {
                 let mail = this.mapDataToMail(mailTemplate,extendedContracts);
@@ -48,6 +73,7 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
             console.log('Processing Extend Expiry mails for Contracts Completed');
  
         } catch (error) {
+            this.logError(error);
             console.log(error);
         }
 
@@ -57,68 +83,77 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
         console.log('Updating expiry dates finished.');
     }
 
-    async updateExistingContract(contractsIds) {
-        const tx = cds.tx();
+    async updateExistingContract(contract, newEndDate) {
 
-        const { CCMContract } = this.db.entities("com.bayer.SXTENDER.ccma");
+        const expiryDate = newEndDate;
+        const contractNumber = contract.ContractNumber;
 
-        let contracts = await tx.run(SELECT.from(CCMContract).where({ ID: {in: contractsIds}}));
+        const {response, body} = await this.handlExistingContract('ES',"ConditionContract",{ExistingContractNumber: contractNumber,ExpireDate: expiryDate});
 
-        contracts.forEach(async contract => {
-            const expiryDate = contract.CCMContractEndDate;
-            const contractNumber = contract.ContractNumber;
+        //console.log(response);
+        if (response?.status !== 200) {
+            const error = new Error(
+                `Update of ExistingContract failed for ${contractNumber}`
+            );
+            error.payload = body;
+            error.ContractNumber = contractNumber;
+            throw error;
+        }
 
-            const response = await this.handlExistingContract('ES',"ConditionContract",{ExistingContractNumber: contractNumber,ExpireDate: expiryDate});
-
-            console.log(response);
-            if (response?.status !== 200) {
-                throw new Error(`Update of ExistingContract failed for ${contractNumber}`);
-            }
-
-            console.log(`Existing contract ${contractNumber} updated successfully`);
-        });
-       
+        console.log(`Existing contract ${contractNumber} updated successfully`);
 
         return true;
     }
 
-    async handlExistingContract(countryCode, resource, sourceData) {
-        const tx = cds.tx();
-        try {
-            const { APIDefinition, APIBody, APIConfigOAuth } = this.db.entities('com.bayer.SXTENDER.ccma');
-            const apiConfig = await tx.run(SELECT.one.from(APIDefinition).where({ Provider: 'ConditionContract', CountryCode: countryCode, Resource: resource, Name: 'UpdateExistingInvoiceContract' }));
-            const apiBodyMappings = await tx.run(SELECT.from(APIBody).where({ APIDefinition_ID: apiConfig.ID }));
-            if (!apiBodyMappings) {
-                throw new Error("ERR_MISSING_PARAMETER:API body Mappings not found");
-            }
-            const body = this.buildExistingUpdatePayloadFromMappings(sourceData, apiBodyMappings);
-            if (!body) {
-                throw new Error("ERR_MISSING_PARAMETER:API Body not found");
-            }
+    async persistNewEndDate(id, newEndDate) {
+        const { CCMContract } = this.db.entities("com.bayer.SXTENDER.ccma");
+        const tx = this.db.tx();
+        await tx.run(UPDATE(CCMContract).set({ CCMContractEndDate: newEndDate }).where({ ID: id }));
+        await tx.commit();
 
-            console.log("payload" + JSON.stringify(body));
-            const oauthAuth = await tx.run(SELECT.one.from(APIConfigOAuth, apiConfig.OAuth_ID));
-            const url = `${apiConfig.Host}${apiConfig.BasePath}${apiConfig.ResourcePath}`;
-            console.log("url and oauthAuth"+ url + JSON.stringify(oauthAuth));
-            const oauthCredentials = await this.getBearerToken(oauthAuth);
-            return axios({
-                method: 'patch',
-                url: url,
-                headers: {
-                    'Authorization': `Bearer ${oauthCredentials.data.access_token}`,
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify(body)
-            });
-        } catch (error) {
-            throw error
+    }
+
+    async handlExistingContract(countryCode, resource, sourceData) {
+        this.db = await cds.connect.to('db');
+        const tx = this.db.tx();
+        const { APIDefinition, APIBody, APIConfigOAuth } = this.db.entities("com.bayer.SXTENDER.ccma");
+
+        const apiConfig = await tx.run(SELECT.one.from(APIDefinition).where({ Provider: 'ConditionContract', CountryCode: countryCode, Resource: resource, Name: 'UpdateExistingInvoiceContract' }));
+        const apiBodyMappings = await tx.run(SELECT.from(APIBody).where({ APIDefinition_ID: apiConfig.ID }));
+        
+        if (!apiBodyMappings) {
+            throw new Error("ERR_MISSING_PARAMETER:API body Mappings not found");
         }
+        const body = this.buildExistingUpdatePayloadFromMappings(sourceData, apiBodyMappings);
+        
+        if (!body) {
+            throw new Error("ERR_MISSING_PARAMETER:API Body not found");
+        }
+
+        console.log("payload" + JSON.stringify(body));
+        const oauthAuth = await tx.run(SELECT.one.from(APIConfigOAuth, apiConfig.OAuth_ID));
+        const url = `${apiConfig.Host}${apiConfig.BasePath}${apiConfig.ResourcePath}`;
+
+        const oauthCredentials = await this.getBearerToken(oauthAuth);
+
+        const response = await axios({
+            method: 'patch',
+            url: url,
+            headers: {
+                'Authorization': `Bearer ${oauthCredentials.data.access_token}`,
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(body)
+        });
+
+        return {response, body};
+
     }
 
     async getBearerToken(oauthAuth) {
 
         if (oauthAuth.OAuthProvider && oauthAuth.ClientID && oauthAuth.ClientSecret && oauthAuth.Scope) {
-            console.log(`Calling ${oauthAuth.OAuthProvider}`);
+
             return axios({
                 method: 'post',
                 url: oauthAuth.OAuthProvider,
@@ -132,10 +167,10 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
                     'grant_type': oauthAuth.GrantType,
                     'scope': oauthAuth.Scope
                 })/*, when testing locally, comment out the proxy
-					proxy: {
-						host: priceAgreementApi.ProxyHost,
-						port: priceAgreementApi.ProxyPort
-					}*/
+                    proxy: {
+                        host: priceAgreementApi.ProxyHost,
+                        port: priceAgreementApi.ProxyPort
+                    }*/
             });
         }
 
@@ -178,71 +213,29 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
         });
     }
 
-    async updateContractsExpiration(){
-        const tx = cds.tx();
-        try {
+    async getContractsToExtend() {
+        this.db = await cds.connect.to('db');
+        const { CCMContract } = this.db.entities("com.bayer.SXTENDER.ccma");
+        const tx = this.db.tx();
+        let yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const dateY = yesterday.toISOString().split('T')[0];
 
-            const { CCMContract } = this.db.entities("com.bayer.SXTENDER.ccma");
+        const result = await tx.run(SELECT.from(CCMContract).where({ Extension: true, Cancelled: false }));
 
-            //get all contracts which have to be extended
-            //first, calculate todays date - 1 day, as such that we can use this as a filter in our select
+        return result.filter(c => c.CCMContractEndDate === dateY);
 
+    }
 
-            const whereExpr = `Extension = true and Cancelled = false` //and expiry date is today - 1 
-            const ccmContracts = await tx.run(SELECT.from(CCMContract).where(whereExpr));
+    calculateNewEndDate(contract) {
+        if (!contract.CCMContractEndDate) return null;
 
-            let contractsIds = [];
-            const promises = [];
-            
-            ccmContracts.forEach(contract => {
-                let todayMinus1 = new Date();
-                todayMinus1.setDate(todayMinus1.getDate() - 1);
-                todayMinus1 = todayMinus1.toISOString().split('T')[0];
-                if(!contract.CCMContractEndDate){
-                    console.log(`AgreementID ${contract.ID}:Expiry date ${contract.CCMContractEndDate} is not valid, will not be processed...`);
-                    return;
-                }
+        const d = new Date(contract.CCMContractEndDate);
+        const months = Number(contract.ExtensionPeriod) || 0;
 
-                let contractExpiryDate = contract.CCMContractEndDate;
-
-                if(contractExpiryDate === todayMinus1){
-                    let newDate = new Date(contract.CCMContractEndDate);
-                    let extensionMonths = Number(contract.ExtensionPeriod) || 0;
-                    newDate.setMonth(newDate.getMonth()+ extensionMonths);
-                    newDate = newDate.toISOString().split('T')[0];
-                    contractsIds.push(contract.ID);
-
-                    //update the actual contract with the new contract end date
-                    promises.push(tx.run(UPDATE(CCMContract).with({CCMContractEndDate: newDate}).where({ ID: contract.ID })));
-                }
-            });
-
-            //execute the promises and log the output
-            if(promises.length > 0){
-                console.log(`Updating ${CCMContract.name} ...`);
-                await Promise.all(promises);
-                await tx.commit();
-                console.log(`${promises.length} Expiry date(s) successfully updated in ${CCMContract.name}.`);
-            }
-            
-            return contractsIds;
-
-        } catch (error) {
-            console.log('Updating expiry dates has failed.');
-            console.log(error);
-            await tx.rollback(error);
-        }   
-    };
-
-    addLeadingZeros (num, size) {
-        if (num === null) {
-            throw new Error(`${num} doesn't exist`);
-        }
-        
-        num = num.toString();
-        while (num.length < size) num = "0" + num;
-        return num;
-    };
+        d.setMonth(d.getMonth() + months);
+        return d.toISOString().split("T")[0];
+    }
 
     async getMailTemplate(templateId) {
         console.log('Get mail templates');
@@ -265,26 +258,30 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
         const fastbackendAPI = await cds.connect.to("FASTBACKEND_API");
         // const mailTemplate = await getMailTemplate(api, templateId);
         // const mappedData = mappingCB(mailTemplate?.d, data, subject, recipients);
-        return fastbackendAPI.send({
-            method: 'POST',
-            path: `/v2/conditioncontracting/OutgoingMails`,
-            data: mail
-        });
+        try {
+            return await fastbackendAPI.send({
+                method: 'POST',
+                path: `/v2/conditioncontracting/OutgoingMails`,
+                data: mail
+            });
+        } catch (err) {
+            console.error('Error sending mails to outbox (FASTBACKEND_API):', err && err.stack ? err.stack : err);
+            throw err;
+        }
     }
  
-    async getContractsExtended(contractsIds) {
+    async loadExtendedContractDetails(contractsIds) {
         console.log(`Fetching Extended Contract Details`);
+        this.db = await cds.connect.to('db');
         const { CCMContractsExtendedView } = this.db.entities("ConditionContract");
         const appEnv = cfenv.getAppEnv();
         const fastUIAppHost = (appEnv && appEnv.url) ? appEnv.url.replace('fast-srv', 'fastui-app') : '';
         const tx = this.db.tx();
         let contracts = await tx.run(SELECT.from(CCMContractsExtendedView).where({ CCMContractID: {in: contractsIds}}));
-        //let contracts = await SELECT.from(FastConditionContracts);        
-        //await tx.commit();
         console.log(`Fetched ${JSON.stringify(contracts)} Extended Contracts`);
         return contracts.map(contract => {                
-            contract.FormatedExpiryDate = this.dateToDDMMYYYY(contract.CCMContractEndDate);
-            contract.URL = `${fastUIAppHost}/app/index.html#/conditioncontract&/ccma/detail/${contract.ID}`
+            contract.FormatedExpiryDate = this.dateToDDMMYYYY(contract.ExpiryDate);
+            contract.URL = `${fastUIAppHost}/app/index.html#/conditioncontract&/ccma/detail/${contract.CCMContractID}`
             return contract;
         })
     };
@@ -328,8 +325,7 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
       
     }
  
-    generateMailBody(content, data) {
-       
+    generateMailBody(content, data) {       
         return Handlebars.compile("" + content)(data);
     };
 
@@ -338,15 +334,19 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
         var m = dateStr.substr(5,2);
         var y = dateStr.substr(8,2);
         return `${d}-${m}-${y}`;
-      }
+    }
+
+    async logError(err) {
+        cds.spawn(async (tx) => {
+            const { ConditionContractsLog } = this.db.entities("com.bayer.SXTENDER.ccma");
+            const inserts = {            
+                PayloadToSAP      : err.config.data || JSON.stringify(err.config.data), 
+                createdAt         : new Date().toISOString(),
+                ErrorMessage     : err.response.data.Exception_Details.Exception_Message || err.message,
+                PayloadType: 'AutoExtendContractsJob'
+            }
+            await tx.run(INSERT.into(ConditionContractsLog).entries(inserts));
+        })
+    }
  
-    // findTemplate(templates, templateid, dataItem) {
-    //     if (!templates || !Array.isArray(templates)) {
-    //         return null;
-    //     }
-    //     return templates.find(template =>
-    //         template.CountryCode === 'ES' &&
-    //         template.Language === 'ES' &&
-    //         template.TemplateId === templateid);
-    // };
 };

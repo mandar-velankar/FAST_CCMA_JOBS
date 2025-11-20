@@ -284,7 +284,7 @@ entity ConditionContractsLog : cuid {
   createdAt         : Date;
   createdBy         : String;
   ErrorMessage     : String;
-  CCMContract: UUID;
+  CCMContractID: UUID;
 }
 entity SchedulerJobConfig: cuid , managed{
     JobName : String;
