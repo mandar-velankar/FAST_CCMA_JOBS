@@ -536,6 +536,7 @@ entity CCMContractsExpiringSoonView as select from FastConditionContracts as fcc
         ccm.ContractNumber as ContractNumber,
         ccm.CCMContractStartDate as EffectiveDate,
         ccm.CCMContractEndDate as ExpiryDate,
+        ccm.Synchronized,
         ccm.ExtensionPeriod,
         ccm.Extension,
         invoice.YP00 as PVL

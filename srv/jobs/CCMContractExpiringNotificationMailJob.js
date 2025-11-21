@@ -63,10 +63,12 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
         const countryCodeFullWhere = (this.countryCode && ServiceHelper.buildFullWhere('CountryCode', '=', this.countryCode)) || [];
         const extensionFullWhere = ServiceHelper.buildFullWhere('Extension', '=', true) || [];
         const expiryDateFullWhere =  (expiryDate && ServiceHelper.buildFullWhere('ExpiryDate', '=', expiryDate)) || [];
+        const synchronizedFullWhere =  (expiryDate && ServiceHelper.buildFullWhere('Synchronized', '=', true)) || [];
         let contracts = await tx.run(SELECT.from(CCMContractsExpiringSoonView)
                 .where(countryCodeFullWhere)
                 .where(extensionFullWhere)
-                .where(expiryDateFullWhere));
+                .where(expiryDateFullWhere)
+                .where(synchronizedFullWhere));
 
         
         return contracts.map(contract => {
