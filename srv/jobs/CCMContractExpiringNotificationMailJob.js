@@ -88,7 +88,7 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
             OfferID: contract.OfferID,
             Sender: 'FAST-Admin@bayer.com',
             Recipients: contract.OwnerEmail,
-            Subject: this.findTemplate(templates,mail,contract).title,
+            Subject: this.findTemplate(templates,mail,contract)?.title,
             MailBody: this.generateMailBody(this.findTemplate(templates,mail,contract), contract),
             Sent: false
         }))
@@ -97,10 +97,15 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
             return !!contract.MailBody && contract.MailBody !== 'undefined';
         });
 
-    findTemplate = (templates,templateid,contract) => templates.find(template => 
+    findTemplate = (templates,templateid,contract) => {
+        const template = templates.find(template => 
         template.CountryCode === contract.CountryCode && 
         template.Language === contract.CountryCode && 
         template.TemplateId === templateid);
+
+        if (!template) return {};
+        return template.MailTemplateFile;
+    };
 
     async addMailsToOutbox(mails, expiryDate) {
         console.log(`Adding reminder mails for CCM Contracts to outbox for expiry date: ${expiryDate}`);
@@ -110,7 +115,7 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
             return fastbackendAPI.send({
                 method: 'POST',
                 path: `/v2/conditioncontracting/OutgoingMails`,
-                data: mail
+                data: mails
             });
         } catch (error) {
             console.error(error);
@@ -119,7 +124,7 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
     }
     generateMailBody(mail, data) {
         //CountryCode: language, Language: language, 
-        return Handlebars.compile("" + mail.content)(data);
+        return Handlebars.compile("" + mail?.content)(data);
     }
     async getMailTemplates(templateIds) {
         console.log('Get mail templates for CCM Contracts');
@@ -131,8 +136,15 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
                 method: 'GET',
                 path: `/v2/conditioncontracting/MailTemplate?$expand=MailTemplateFile&$select=MailTemplateFile.content&$filter=CountryCode eq '${this.countryCode}' and Language eq '${this.countryCode}' and (TemplateID eq '${templateIds[0]}' or TemplateID eq '${templateIds[1]}')`
             });
-            
-            return result?.d;
+            const data = result?.d;
+            const templates = Object.keys(data)
+                .filter(key => !isNaN(key))       // keep only numeric keys
+                .map(key => data[key])
+                .map(key => {
+                    key.MailTemplateFile.content = key.MailTemplateFile.content ? Buffer.from(key.MailTemplateFile.content, 'base64') : null;
+                    return key;
+                });
+            return templates;
         }catch(error){
             console.error("No mail template found");
             return [];
