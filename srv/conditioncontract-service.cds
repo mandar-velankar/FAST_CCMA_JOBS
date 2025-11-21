@@ -515,4 +515,29 @@ entity CCMContractsExtendedView as
         fcc.TenderID,
         fcc.ContractType as Classification
     };
+@cds.persistence.exists
+entity CCMContractsExpiringSoonView as select from FastConditionContracts as fcc 
+    inner join CCMContract as ccm on ccm.FastConditionContracts.ID = fcc.ID
+    inner join PriceConditionInvoice as invoice on invoice.CCMContract.ID = ccm.ID {
+        fcc.ID as FastConditionContractID,
+    key ccm.ID as CCMContractID,
+        fcc.TenderID,
+        fcc.OfferID,
+        fcc.CountryCode,
+        ccm.modifiedBy as CWID,
+        fcc.Owner,
+        fcc.OwnerEmail,
+        fcc.OwnerName,
+        fcc.ExternalID,
+        ccm.CCMContractEndDate,
+        ccm.CCMCustomer.InstituteName,
+        ccm.ProductName,
+        ccm.ProductCode,
+        ccm.ContractNumber as ContractNumber,
+        ccm.CCMContractStartDate as EffectiveDate,
+        ccm.CCMContractEndDate as ExpiryDate,
+        ccm.ExtensionPeriod,
+        ccm.Extension,
+        invoice.YP00 as PVL
+    }
 }

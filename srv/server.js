@@ -9,4 +9,7 @@ cds.on('served', async (services) => {
   
   //const AutoExtendContractsJob = require("./jobs/AutoExtendContractsJob");
   // new AutoExtendContractsJob("test","*").onTick();
+
+  // const CCMContractExpiringNotificationMailJob = require("./jobs/CCMContractExpiringNotificationMailJob");
+  // new CCMContractExpiringNotificationMailJob("test","*").onTick();
 });
