@@ -57,7 +57,7 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
         console.log(`Fetching Contracts with expiry date: ${expiryDate}`);
         const { CCMContractsExpiringSoonView } = this.db.entities("ConditionContract");
         const appEnv = cfenv.getAppEnv();
-        const fastUIAppHost = appEnv.url.replace('fast-srv','fastui-app');
+        const fastUIAppHost = appEnv.url.replace('f-tndr-cag-fast-ccma-jobs-srv','fastui-app');
         const tx = this.db.tx();
 
         const countryCodeFullWhere = (this.countryCode && ServiceHelper.buildFullWhere('CountryCode', '=', this.countryCode)) || [];
