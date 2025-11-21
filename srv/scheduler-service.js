@@ -2,6 +2,7 @@ const cds = require('@sap/cds');
 const JobManager = require("./jobs/JobManager");
 const AutoExtendContractsJob = require("./jobs/AutoExtendContractsJob");
 const CCMContractsCreatedNotificationMailJob = require("./jobs/CCMContractsCreatedNotificationMailJob");
+const CCMContractExpiringNotificationMailJob = require("./jobs/CCMContractExpiringNotificationMailJob");
 module.exports = (srv) => {
 
 
