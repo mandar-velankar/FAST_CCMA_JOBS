@@ -541,4 +541,51 @@ entity CCMContractsExpiringSoonView as select from FastConditionContracts as fcc
         ccm.Extension,
         invoice.YP00 as PVL
     }
+@cds.persistence.exists
+entity CCMContractPriceChangeNotificationView as select from FastConditionContracts as fcc 
+    inner join CCMContract as ccm on ccm.FastConditionContracts.ID = fcc.ID
+    inner join CCMMaterial as mat on mat.CCMContract.ID = ccm.ID and mat.ActiveRecord = 1
+    inner join PriceConditionInvoice as invoice on invoice.CCMContract.ID = ccm.ID
+    inner join CurrentInvoicePrice as currentInvoice on currentInvoice.CCMContract.ID = ccm.ID {
+        fcc.ID as FastConditionContractID,
+    key ccm.ID as CCMContractID,
+        fcc.TenderID,
+        fcc.OfferID,
+        fcc.CountryCode,
+        ccm.modifiedBy as CWID,
+        fcc.Owner,
+        fcc.OwnerEmail,
+        fcc.OwnerName,
+        fcc.ExternalID,
+        fcc.hasNetPriceAbovePVL,
+        fcc.hasNetPriceBelowFloorPrice,
+        fcc.hasUpdatedPVL,
+        fcc.hasUpdatedConfidentialPrice,
+        ccm.CCMCustomer.InstituteName,
+        ccm.CCMCustomer.InstituteType,
+        ccm.CCMCustomer.InstituteID,
+        ccm.CCMCustomer.CustomerID,
+        ccm.ProductName,
+        ccm.ProductCode,
+        ccm.ContractNumber as ContractNumber,
+        ccm.CCMContractStartDate as EffectiveDate,
+        ccm.CCMContractEndDate as ExpiryDate,
+        ccm.Synchronized,
+        ccm.ExtensionPeriod,
+        ccm.Extension,
+        ccm.Cancelled as isCancelled,
+        ccm.Expired as isExpired,
+        ccm.UoM,
+        ccm.PackFactor,
+        mat.MaterialNumber,
+        invoice.ConditionType,
+        invoice.YP00 as PVL,
+        currentInvoice.YP00 as CurrentPVL,
+        invoice.NetPriceWithTax as NetPriceWithTax,
+        case 
+            when currentInvoice.ConditionType = 'PrecioNeto'
+                then currentInvoice.YP10
+            else currentInvoice.NetPriceWithoutTax
+        end as NetPrice: Double
+    } where ccm.Synchronized = true;
 }
