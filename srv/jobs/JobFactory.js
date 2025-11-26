@@ -2,6 +2,9 @@
 const CCMContractsCreatedNotificationMailJob = require("./CCMContractsCreatedNotificationMailJob");
 const AutoExtendContractsJob = require("./AutoExtendContractsJob");
 const CCMContractExpiringNotificationMailJob = require("./CCMContractExpiringNotificationMailJob");
+const CCMContractIdentifyPriceUpdateJob = require("./CCMContractIdentifyPriceUpdateJob");
+const CCMContractNotificationNetPriceBelowFloorJob = require("./CCMContractNotificationNetPriceBelowFloorJob");
+const CCMContractNotificationNetPriceAbovePVLJob = require("./CCMContractNotificationNetPriceAbovePVLJob");
 
 module.exports = class JobFactory {
     static create(jobName, jobTime) {
@@ -15,6 +18,15 @@ module.exports = class JobFactory {
             case this.jobNames.CCMContractExpiringNotificationMailJob:
                 return new CCMContractExpiringNotificationMailJob(jobName,jobTime)
                 break;
+            case this.jobNames.CCMContractNotificationNetPriceAbovePVLJob:
+                return new CCMContractNotificationNetPriceAbovePVLJob(jobName,jobTime)
+                break;
+            case this.jobNames.CCMContractNotificationNetPriceBelowFloorJob:
+                return new CCMContractNotificationNetPriceBelowFloorJob(jobName,jobTime)
+                break;
+            case this.jobNames.CCMContractIdentifyPriceUpdateJob:
+                return new CCMContractIdentifyPriceUpdateJob(jobName,jobTime)
+                break;
             default:
                 throw new Error('Job type not supported');
                 break;
@@ -24,7 +36,10 @@ module.exports = class JobFactory {
         return {
             CCMContractsCreatedNotificationMailJob: "CCMContractsCreatedNotificationMailJob",
             AutoExtendContractsJob: "AutoExtendContractsJob",
-            CCMContractExpiringNotificationMailJob: "CCMContractExpiringNotificationMailJob"
+            CCMContractExpiringNotificationMailJob: "CCMContractExpiringNotificationMailJob",
+            CCMContractNotificationNetPriceAbovePVLJob: "CCMContractNotificationNetPriceAbovePVLJob",
+            CCMContractNotificationNetPriceBelowFloorJob: "CCMContractNotificationNetPriceBelowFloorJob",
+            CCMContractIdentifyPriceUpdateJob: "CCMContractIdentifyPriceUpdateJob"
         };
     }
 }

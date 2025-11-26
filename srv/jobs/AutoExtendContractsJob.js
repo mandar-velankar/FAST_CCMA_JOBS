@@ -342,7 +342,7 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
             const inserts = {            
                 PayloadToSAP      : err.config.data || JSON.stringify(err.config.data), 
                 createdAt         : new Date().toISOString(),
-                ErrorMessage     : err.response.data.Exception_Details.Exception_Message || err.message,
+                ErrorMessage     : err.response?.data?.fault?.faultstring || err.stack || err.message,
                 PayloadType: 'AutoExtendContractsJob'
             }
             await tx.run(INSERT.into(ConditionContractsLog).entries(inserts));

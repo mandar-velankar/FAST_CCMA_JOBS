@@ -74,22 +74,22 @@ resources:
     parameters:
       config:
         HTML5Runtime_enabled: false
-        init_data:
-          subaccount:
-            destinations:
-            - Authentication: NoAuthentication
-              Name: ui5
-              ProxyType: Internet
-              Type: HTTP
-              URL: https://ui5.sap.com
-            - Authentication: NoAuthentication
-              Name: fast-ccma-api
-              ProxyType: Internet
-              Type: HTTP
-              URL: ~{srv-api/srv-url}
-              HTML5.DynamicDestination: true
-              HTML5.ForwardAuthToken: true
-            existing_destinations_policy: update
+        # init_data:
+        #   subaccount:
+        #     destinations:
+        #     - Authentication: NoAuthentication
+        #       Name: ui5
+        #       ProxyType: Internet
+        #       Type: HTTP
+        #       URL: https://ui5.sap.com
+        #     - Authentication: NoAuthentication
+        #       Name: fast-ccma-api
+        #       ProxyType: Internet
+        #       Type: HTTP
+        #       URL: ~{srv-api/srv-url}
+        #       HTML5.DynamicDestination: true
+        #       HTML5.ForwardAuthToken: true
+        #     existing_destinations_policy: update
         version: 1.0.0
       service: destination
       service-name: F_TNDR_CAG_FAST_CCMA_BACKEND-destination-service

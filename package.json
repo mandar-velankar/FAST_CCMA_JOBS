@@ -32,6 +32,7 @@
     "start": "cds-serve",
     "watch": "cds watch",
     "watch:hybrid": "cds bind --exec npm run watch --profile hybrid",
+    "watch:qa": "cds bind --exec npm run watch --profile qa",
     "watch:mv": "cds bind --exec npm run watch --profile mandar",
     "build:cds": "cds build --production",
     "undeploy": "cf undeploy F_TNDR_CAG_FAST_CCMA_JOBS --delete-services --delete-service-keys --delete-service-brokers",
@@ -49,6 +50,12 @@
         "kind": "rest",
         "credentials": {
           "destination": "FAST_API_OAUTH"
+        }
+      },
+      "ConditionContract": {
+        "kind": "odata",
+        "credentials": {
+          "destination": "FAST_CCMA_OAUTH"
         }
       }
     }
