@@ -3,6 +3,7 @@ const JobManager = require("./jobs/JobManager");
 const AutoExtendContractsJob = require("./jobs/AutoExtendContractsJob");
 const CCMContractsCreatedNotificationMailJob = require("./jobs/CCMContractsCreatedNotificationMailJob");
 const CCMContractExpiringNotificationMailJob = require("./jobs/CCMContractExpiringNotificationMailJob");
+const CCMContractIdentifyPriceUpdateJob = require("./jobs/CCMContractIdentifyPriceUpdateJob");
 module.exports = (srv) => {
 
 
@@ -36,10 +37,11 @@ module.exports = (srv) => {
     });
     /**Uncomment to test the job manually **/
 
-    //  srv.on('startTestJob', async (req) => {
+    // srv.on('startTestJob', async (req) => {
     //     JobManager.registerJobs();
-    //      new AutoExtendContractsJob("test","*").onTick();
-    //      //new CCMContractsCreatedNotificationMailJob("test","*").onTick();
-    //      return "Test Job Started";
+    //     new AutoExtendContractsJob("test","*").onTick();
+    //     new CCMContractsCreatedNotificationMailJob("test","*").onTick();
+    //     new CCMContractIdentifyPriceUpdateJob("test","*").onTick();
+    //     return "Test Job Started";
     // });
 };
