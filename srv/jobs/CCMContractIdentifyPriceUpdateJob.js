@@ -5,6 +5,8 @@ const axios = require('axios');
 const qs = require("qs");
 const cfenv = require("cfenv");
 const Handlebars = require("handlebars");
+const CCMContractNotificationNetPriceBelowFloorJob = require("./CCMContractNotificationNetPriceBelowFloorJob");
+const CCMContractNotificationNetPriceAbovePVLJob = require("./CCMContractNotificationNetPriceAbovePVLJob");
 
 module.exports = class CCMContractIdentifyPriceUpdateJob extends BaseJob {
 
@@ -47,6 +49,10 @@ module.exports = class CCMContractIdentifyPriceUpdateJob extends BaseJob {
             }
         }
         console.log('CCM Contract Identify Price Update Job finished.');
+        await Promise.all([
+            new CCMContractNotificationNetPriceBelowFloorJob('CCMContractNotificationNetPriceBelowFloorJob','').onTick(),
+            new CCMContractNotificationNetPriceAbovePVLJob('CCMContractNotificationNetPriceAbovePVLJob','').onTick()
+        ]);
     }
 
     async logError(err, contract) {
