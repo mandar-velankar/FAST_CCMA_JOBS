@@ -23,10 +23,12 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
             this.countryCode = "ES";
             const mailRuns = [{
                 expiryDate: this.getExpiringSoonDate(),
-                template: 'CCMContractExpiredSoonMail'
+                template: 'CCMContractExpiredSoonMail',
+                markExpiringSoon: true
             }, {
                 expiryDate: this.getReminderDate(),
-                template: 'CCMContractReminderMail'
+                template: 'CCMContractReminderMail',
+                markExpiringSoon: false
             }];
             //get all mail templates for CCM Contracts
             const mailTemplates = await this.getMailTemplates(mailRuns.map(mailRun=>mailRun.template));
@@ -35,6 +37,9 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
                 //get CCM Contracts based on mail reminder date
                 let contracts = await this.getExpiringCCMContracts(mailRun.expiryDate);
                 // console.dir(contracts,{ depth: null });
+                if (mailRun.markExpiringSoon) {
+                    await this.markFastContractsAsExpiringSoon(contracts);
+                }
                 if (contracts && contracts.length > 0) {
                     let mails = this.mapCCMContractsToMails(mailTemplates,mailRun.template)(contracts);
                     // console.log(mails);
@@ -178,6 +183,25 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
         var y = dateStr.substr(8,2);
         return `${d}-${m}-${y}`;
       }
+
+    async markFastContractsAsExpiringSoon(contracts) {
+        console.log(`Updating Expiring Soon Fast Condition Contrats Started`);
+        const { FastConditionContracts } = this.db.entities("com.bayer.SXTENDER.ccma");
+        const tx = this.db.tx();
+
+        const fastContractIds = contracts.map(c => c.FastConditionContractID);
+
+        if (fastContractIds.length === 0) {
+            console.log(`No Expiring Soon Fast Condition Contracts to update`);
+            return;
+        }
+
+        for (const fastContractId of fastContractIds) {
+            await tx.run(UPDATE(FastConditionContracts).with({ hasExpiringSoonContracts: true }).where({ID: fastContractId}));
+        }
+        await tx.commit();
+        console.log(`Updating Expiring Soon Fast Condition Contrats Finished`);
+    }
 };
 
 module.exports = CCMContractExpiringNotificationMailJob;
