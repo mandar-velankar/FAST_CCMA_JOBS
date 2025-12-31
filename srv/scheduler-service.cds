@@ -15,4 +15,5 @@ service SchedulerService @(path : 'scheduler')@(requires : ['authenticated-user'
     entity SchedulerJobConfig as projection on ccma.SchedulerJobConfig;
     function SystemJobs() returns array of Job;
     action ManageJob( Action:String, JobName:String ) returns array of Job;
+    // function startTestJob() returns String; // Uncomment to test the job manually
 }
