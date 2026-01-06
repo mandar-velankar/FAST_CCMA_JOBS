@@ -4,6 +4,7 @@ const AutoExtendContractsJob = require("./jobs/AutoExtendContractsJob");
 const CCMContractsCreatedNotificationMailJob = require("./jobs/CCMContractsCreatedNotificationMailJob");
 const CCMContractExpiringNotificationMailJob = require("./jobs/CCMContractExpiringNotificationMailJob");
 const CCMContractIdentifyPriceUpdateJob = require("./jobs/CCMContractIdentifyPriceUpdateJob");
+const CCMContractsCancelledNotificationMailJob = require("./jobs/CCMContractsCancelledNotificationMailJob");
 module.exports = (srv) => {
 
 
