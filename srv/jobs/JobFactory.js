@@ -5,6 +5,7 @@ const CCMContractExpiringNotificationMailJob = require("./CCMContractExpiringNot
 const CCMContractIdentifyPriceUpdateJob = require("./CCMContractIdentifyPriceUpdateJob");
 const CCMContractNotificationNetPriceBelowFloorJob = require("./CCMContractNotificationNetPriceBelowFloorJob");
 const CCMContractNotificationNetPriceAbovePVLJob = require("./CCMContractNotificationNetPriceAbovePVLJob");
+const CCMContractsCancelledNotificationMailJob = require("./CCMContractsCancelledNotificationMailJob");
 
 module.exports = class JobFactory {
     static create(jobName, jobTime) {
@@ -27,6 +28,9 @@ module.exports = class JobFactory {
             case this.jobNames.CCMContractIdentifyPriceUpdateJob:
                 return new CCMContractIdentifyPriceUpdateJob(jobName,jobTime)
                 break;
+            case this.jobNames.CCMContractsCancelledNotificationMailJob:
+                return new CCMContractsCancelledNotificationMailJob(jobName,jobTime)
+                break;
             default:
                 throw new Error('Job type not supported');
                 break;
@@ -39,7 +43,8 @@ module.exports = class JobFactory {
             CCMContractExpiringNotificationMailJob: "CCMContractExpiringNotificationMailJob",
             CCMContractNotificationNetPriceAbovePVLJob: "CCMContractNotificationNetPriceAbovePVLJob",
             CCMContractNotificationNetPriceBelowFloorJob: "CCMContractNotificationNetPriceBelowFloorJob",
-            CCMContractIdentifyPriceUpdateJob: "CCMContractIdentifyPriceUpdateJob"
+            CCMContractIdentifyPriceUpdateJob: "CCMContractIdentifyPriceUpdateJob",
+            CCMContractsCancelledNotificationMailJob: "CCMContractsCancelledNotificationMailJob"
         };
     }
 }

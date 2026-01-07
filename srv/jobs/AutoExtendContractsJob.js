@@ -317,6 +317,22 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
                 
             }
         }
+        outbox.push({
+            CountryCode: data[0].CountryCode,
+            TenderID: data[0].TenderID,
+            OfferID: data[0].OfferID,
+            Sender: 'FAST-Admin@bayer.com',
+            Recipients: undefined,
+            Subject: template?.d?.MailTemplateFile?.title,
+            MailBody: this.generateMailBody(templateContent, { 
+                data: { 
+                    SyncDate: syncDate.toDateString(), 
+                    CCMContracts: data 
+                }
+            }),
+            Sent: false
+        });
+        
         if(!outbox || (!outbox[0].MailBody || outbox[0].MailBody === 'undefined')) {
             console.log(`No template found for Auto Extend Contracts ${outbox[0].TenderID} with countrycode ${outbox[0].CountryCode}`);
             return;
