@@ -75,7 +75,7 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
 
         // build fast UI host from environ
         const appEnv = cfenv.getAppEnv();
-        const fastUIAppHost = (appEnv && appEnv.url) ? appEnv.url.replace('fast-srv', 'fastui-app') : '';
+        const fastUIAppHost = (appEnv && appEnv.url) ? appEnv.url.replace('f-tndr-cag-fast-ccma-jobs-srv', 'fastui-app') : '';
 
         // normalize the rows (do not mutate original objects if possible)
         data.forEach(d => {

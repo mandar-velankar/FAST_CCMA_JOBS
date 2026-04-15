@@ -275,7 +275,7 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
         this.db = await cds.connect.to('db');
         const { CCMContractsExtendedView } = this.db.entities("ConditionContract");
         const appEnv = cfenv.getAppEnv();
-        const fastUIAppHost = (appEnv && appEnv.url) ? appEnv.url.replace('fast-srv', 'fastui-app') : '';
+        const fastUIAppHost = (appEnv && appEnv.url) ? appEnv.url.replace('f-tndr-cag-fast-ccma-jobs-srv', 'fastui-app') : '';
         const tx = this.db.tx();
         let contracts = await tx.run(SELECT.from(CCMContractsExtendedView).where({ CCMContractID: {in: contractsIds}}));
         console.log(`Fetched ${JSON.stringify(contracts)} Extended Contracts`);
