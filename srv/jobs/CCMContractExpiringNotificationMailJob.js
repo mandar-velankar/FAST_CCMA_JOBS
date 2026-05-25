@@ -162,12 +162,12 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
     }
     getReminderDate() {
         let date = new Date();
-        date.setDate(date.getDate() + 1);//Set 5 days in PROD
+        date.setDate(date.getDate() + 5);//Set 5 days in PROD
         return this.formatDate(date);
     }
     getExpiringSoonDate() {
         let date = new Date();
-        date.setDate(date.getDate() + 3);//Set 45 days in PROD
+        date.setDate(date.getDate() + 45);//Set 45 days in PROD
         return this.formatDate(date);
     }
     formatDate(date) {
