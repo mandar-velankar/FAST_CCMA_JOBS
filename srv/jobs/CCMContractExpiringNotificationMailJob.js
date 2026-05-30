@@ -171,10 +171,9 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
         return this.formatDate(date);
     }
     formatDate(date) {
-        let month = '' + (date.getMonth() + 1);
-        let day = date.getDate();
-        month = month.length < 2 ? `0${month}` : month;
-        day = day.length < 2 ? `0${day}` : day;
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
         return `${date.getFullYear()}-${month}-${day}`;
     }
     dateToDDMMYYYY(dateStr) {
