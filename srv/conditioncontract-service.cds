@@ -37,10 +37,12 @@ service ConditionContract @(requires:['f_tndr_cag_admin','f_tndr_cag_ccma_user',
     entity CustomerHierarchy                      as projection on ccma.CustomerHierarchy;
 
     @cds.persistence.exists
-    entity FastConditionContractsView             as
-        select from FastConditionContracts {
-            *
-        }
+   entity FastConditionContractsView as select from FastConditionContracts as fcc
+        left join FastConditionContractMaterialsAndBrands as fccmab
+            on fccmab.FastConditionContractID = fcc.ID {
+        key fcc.ID,
+        *,
+    };
 
     @cds.persistence.exists
     entity CCMContractView                        as
@@ -64,6 +66,8 @@ service ConditionContract @(requires:['f_tndr_cag_admin','f_tndr_cag_ccma_user',
                 CCMContract.Extension,
                 CCMContract.ExtensionPeriod,
                 CCMContract.CreationDate,
+                CCMContract.ID as CCMContractID,
+                CCMContract.CCMCustomer.ID as CCMCustomerID,
                 CCMContract.CCMCustomer.InstituteName,
                 CCMContract.CCMCustomer.InstituteType,
                 CCMContract.CCMCustomer.InstituteID,
@@ -110,12 +114,15 @@ service ConditionContract @(requires:['f_tndr_cag_admin','f_tndr_cag_ccma_user',
             ccm.CCMContractStartDate as ConditionValidityStartDate,
             ccm.CCMContractEndDate as ConditionValidityEndDate,
             ccm.OfferPrice as ConditionRateAmount,
+            ccm.EANUPCCode,
             mat.MaterialNumber as Product,
             fcc.SAPID,
             fcc.ExternalID,
             fcc.Reference,
             fcc.TenderID,
-            fcc.ContractType
+            fcc.OfferID,
+            fcc.ContractType,
+            pci.PriceConditionCode
     }
 
 @cds.persistence.exists
@@ -325,6 +332,11 @@ action   sendFOCToInteractMail(FastCCMContractId : UUID, CCMContractID : UUID, P
 action   terminateCCMContract(FastCCMContractId : UUID, CCMContractID : UUID, ProductCode : String, TerminationDate: Date, CancellationNote: String) returns String;
 action   getSAPSalesOrderSimulation(CCMContractID: UUID) returns String;
 action   ignoreCurrentCCMPrice(CCMContractID: UUID) returns String;
+action   addNewMaterialNumberToExistingContract(FastCCMContractId : UUID) returns String;
+function getCacheStats() returns String;
+function invalidateInstitute() returns String;
+function refreshInstitute() returns String;
+function invalidateAPI() returns String;
 
 @cds.persistence.exists
 entity BrandsView as select from CCMContract {
@@ -453,7 +465,7 @@ entity CCMContractsCreatedNotificationMailJobView as
         fcc.ContractType as Classification
     }
     where ccm.ContractNumber is not null
-      and ccm.ContractNumber <> ''
+      and trim(ccm.ContractNumber) <> ''
       and ccm.Expired = false
       and ccm.Cancelled = false
 
@@ -540,7 +552,9 @@ entity CCMContractsExpiringSoonView as select from FastConditionContracts as fcc
         ccm.ExtensionPeriod,
         ccm.Extension,
         invoice.YP00 as PVL
-    }
+    }where ccm.ContractNumber is not null
+    and trim(ccm.ContractNumber) <> '' and ccm.Synchronized = true
+    and ccm.Expired = false and ccm.Cancelled = false;
 @cds.persistence.exists
 entity CCMContractPriceChangeNotificationView as select from FastConditionContracts as fcc 
     inner join CCMContract as ccm on ccm.FastConditionContracts.ID = fcc.ID
@@ -617,6 +631,55 @@ entity CCMContractsCancelledNotificationMailJob as select from FastConditionCont
         fcc.ContractType as Classification
     }
     where ccm.ContractNumber is not null
-      and ccm.ContractNumber <> ''
+      and trim(ccm.ContractNumber) <> ''
       and ccm.Cancelled = true;
+
+@cds.persistence.exists
+entity ContractNewMaterialNumberPayloadView as select from FastConditionContracts as fcc 
+        inner join CCMContract as ccm on ccm.FastConditionContracts.ID = fcc.ID 
+        inner join CCMMaterial as mat on mat.CCMContract.ID = ccm.ID and mat.ActiveRecord = 1
+        left outer join PriceConditionInvoice as pci 
+            on pci.ProductCode = mat.ProductCode and fcc.OfferID = pci.OfferID{
+        key fcc.ID as FastConditionContractID,
+        key ccm.ID as CCMContractID,
+        key ccm.ProductCode,
+            ccm.ContractNumber,
+            fcc.ContractStartDate as CndnContrValidFrom,
+            fcc.ContractEndDate as CndnContrValidTo,
+            fcc.CustomerID as Customer,
+            fcc.InstituteID,
+            fcc.Division,
+            pci.ConditionType,
+            pci.YD02,
+            pci.YD06,
+            pci.YP10,
+            ccm.UoM,
+            ccm.PackFactor,
+            pci.RequestedVolume,
+            ccm.CCMContractStartDate as ConditionValidityStartDate,
+            ccm.CCMContractEndDate as ConditionValidityEndDate,
+            ccm.OfferPrice as ConditionRateAmount,
+            mat.MaterialNumber as Product,
+            fcc.SAPID,
+            fcc.ExternalID,
+            fcc.Reference,
+            fcc.TenderID,
+            fcc.ContractType,
+            pci.PriceConditionCode
+    }where fcc.hasNewMaterialNumber = true 
+        and ccm.Synchronized = true
+        and ccm.ContractNumber is not null
+        and trim(ccm.ContractNumber) <> ''
+        and ccm.hasFOC = 'No'
+        and ccm.hasRappel = 'No'
+        and mat.isNewMaterialNumber = true;
+@cds.persistence.exists
+entity FastConditionContractMaterialsAndBrands as select from FastConditionContracts as fcc
+        left join CCMContract as ccm on ccm.FastConditionContracts.ID = fcc.ID
+        left join CCMMaterial as mat on mat.CCMContract.ID = ccm.ID and mat.ActiveRecord = 1
+    {
+        key fcc.ID as FastConditionContractID,
+        STRING_AGG(mat.MaterialNumber, ',') as ContractMaterialNumbers: String,
+        STRING_AGG(ccm.BrandID, ',') as ContractBrandIDs: String
+     } group by fcc.ID;
 }
