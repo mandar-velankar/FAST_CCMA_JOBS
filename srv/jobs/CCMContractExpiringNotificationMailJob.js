@@ -34,6 +34,7 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
             const mailTemplates = await this.getMailTemplates(mailRuns.map(mailRun=>mailRun.template));
             //loop over configured mailing runs: first mail expired soon + reminder mail
             for (let mailRun of mailRuns) {
+                console.log(`Processing for expiry date ${mailRun.expiryDate} with template ${mailRun.template} started ...`);
                 //get CCM Contracts based on mail reminder date
                 let contracts = await this.getExpiringCCMContracts(mailRun.expiryDate);
                 // console.dir(contracts,{ depth: null });
@@ -51,6 +52,7 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
                 } else {
                     console.log(`No reminder mails to be send for expiry date: ${mailRun.expiryDate}`);
                 }
+                console.log(`Processing for expiry date ${mailRun.expiryDate} with template ${mailRun.template} finished ...`);
             }
         } catch (error) {
             console.error(error);
@@ -59,23 +61,18 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
         console.log('Processing reminder mails for CCM Contracts finished.');
     }
     async getExpiringCCMContracts(expiryDate) {
-        console.log(`Fetching Contracts with expiry date: ${expiryDate}`);
+        console.log(`Fetching Contracts with expiry date: ${expiryDate} started ...`);
         const { CCMContractsExpiringSoonView } = this.db.entities("ConditionContract");
         const appEnv = cfenv.getAppEnv();
         const fastUIAppHost = appEnv.url.replace('f-tndr-cag-fast-ccma-jobs-srv','fastui-app');
         const tx = this.db.tx();
 
         const countryCodeFullWhere = (this.countryCode && ServiceHelper.buildFullWhere('CountryCode', '=', this.countryCode)) || [];
-        const extensionFullWhere = ServiceHelper.buildFullWhere('Extension', '=', true) || [];
         const expiryDateFullWhere =  (expiryDate && ServiceHelper.buildFullWhere('ExpiryDate', '=', expiryDate)) || [];
-        const synchronizedFullWhere =  (expiryDate && ServiceHelper.buildFullWhere('Synchronized', '=', true)) || [];
         let contracts = await tx.run(SELECT.from(CCMContractsExpiringSoonView)
                 .where(countryCodeFullWhere)
-                .where(extensionFullWhere)
-                .where(expiryDateFullWhere)
-                .where(synchronizedFullWhere));
+                .where(expiryDateFullWhere));
 
-        
         return contracts.map(contract => {
             contract.Price = contract.PVL ? contract.PVL : 0;
             contract.FormattedExtendCCMContract = contract.Extension ? 'Yes' : 'No';
@@ -87,6 +84,7 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
             contract.URL = `${fastUIAppHost}/app/index.html#/conditioncontract&/ccma/detail/${contract.FastConditionContractID}/detail-detail/${contract.CCMContractID}/${contract.ProductCode}/ThreeColumnsMidExpanded`
             return contract;
         })
+        console.log(`Fetching Contracts with expiry date: ${expiryDate} finished ...`);
     }
     mapCCMContractsToMails = (templates,mail) => contracts => contracts
         .map(contract => ({

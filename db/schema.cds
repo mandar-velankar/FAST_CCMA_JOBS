@@ -56,6 +56,7 @@ entity CCMContract: cuid, managed, temporal{
   CCMContractStartDate: Date;
   CCMContractEndDate: Date;
   PreviousContractNumber: String;
+  UpdatedContractNumber: String;
   ContractNumber: String;
   ContractReferene: String;
   Expired: Boolean;
@@ -182,6 +183,7 @@ entity PriceConditionInvoice: cuid, managed, temporal{
   RentalPrice                         : Double;
   MonthlyRentPerUnit                  : Double;
   AnnualValue                         : Double;
+  PriceConditionCode                  : String;
   CCMContract: Association to CCMContract;
 }
 
