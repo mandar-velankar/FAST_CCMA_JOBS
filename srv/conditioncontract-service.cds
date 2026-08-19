@@ -683,4 +683,41 @@ entity FastConditionContractMaterialsAndBrands as select from FastConditionContr
         STRING_AGG(mat.MaterialNumber, ',') as ContractMaterialNumbers: String,
         STRING_AGG(ccm.BrandID, ',') as ContractBrandIDs: String
      } group by fcc.ID;
+
+@cds.persistence.exists
+entity CCMContractMaterialNumbers as select from CCMContract as ccm{
+        key ID as CCMContractID,
+        STRING_AGG(
+            CCMMaterial.MaterialNumber || ' - ' || CASE CCMMaterial.ActiveRecord
+                WHEN 1 THEN 'Active'
+                ELSE 'Inactive'
+            END, CHAR(10)) as ContractMaterialNumbers: String
+    }group by 
+        ID;
+
+@cds.persistence.exists
+    entity InstituteTypeView as select from CCMCustomer {
+        key InstituteID,
+        key CustomerID,
+        InstituteType
+    }where InstituteID is not null
+    and CustomerID is not null
+    and InstituteType is not null
+    group by InstituteID,
+        CustomerID,
+        InstituteType;
+
+@cds.persistence.exists
+    entity InstituteNameView as select from CCMCustomer {
+        key InstituteID,
+        key CustomerID,
+        InstituteName,
+        InstituteType
+    }where InstituteID is not null
+    and CustomerID is not null
+    and InstituteName is not null
+    group by InstituteID,
+        CustomerID,
+        InstituteName,
+        InstituteType;
 }

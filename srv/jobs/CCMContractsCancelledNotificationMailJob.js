@@ -56,9 +56,9 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
     async getCancelledCCMContractsData() {
         this.db = await cds.connect.to('db'); 
         console.log(`Fetching Cancelled Contracts ${date.toDateString()}`);
-        const { CCMContractsCreatedNotificationMailJobView} = this.db.entities('ConditionContract');
+        const { CCMContractsCancelledNotificationMailJob} = this.db.entities('ConditionContract');
         const tx = this.db.tx();
-        let cancelledContracts = await tx.run(SELECT.from(CCMContractsCreatedNotificationMailJobView)); 
+        let cancelledContracts = await tx.run(SELECT.from(CCMContractsCancelledNotificationMailJob)); 
         return cancelledContracts;
     }
 

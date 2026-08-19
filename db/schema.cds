@@ -288,7 +288,8 @@ entity ConditionContractsLog : cuid {
   ErrorMessage     : String;
   CCMContractID: UUID;
 }
-entity SchedulerJobConfig: cuid , managed{
+@cds.persistence.exists
+entity SchedulerJobConfigCCMA: cuid , managed{
     JobName : String;
     JobTime : String;
 }
