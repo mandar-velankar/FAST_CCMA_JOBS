@@ -457,6 +457,7 @@ entity CCMContractsCreatedNotificationMailJobView as
         fcc.Division,
         'Invoice' as ContractType: String,
         ccm.ContractNumber as ContractNumber,
+        ccm.UpdatedContractNumber as UpdatedContractNumber,
         ccm.CCMContractStartDate as EffectiveDate,
         ccm.CCMContractEndDate as ExpiryDate,
         ccm.CreationDate as ContractCreationDate,
