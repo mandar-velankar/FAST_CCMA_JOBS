@@ -35,6 +35,8 @@ service ConditionContract @(requires:['f_tndr_cag_admin','f_tndr_cag_ccma_user',
     entity ConditionContractsLog                   as projection on ccma.ConditionContractsLog;
     @cds.persistence.exists
     entity CustomerHierarchy                      as projection on ccma.CustomerHierarchy;
+    @cds.persistence.exists
+    entity SchedulerJobConfigCCMA                 as projection on ccma.SchedulerJobConfigCCMA; 
 
     @cds.persistence.exists
    entity FastConditionContractsView as select from FastConditionContracts as fcc
