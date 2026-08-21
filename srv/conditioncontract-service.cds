@@ -465,7 +465,9 @@ entity CCMContractsCreatedNotificationMailJobView as
         ccm.CreationDate as ContractCreationDate,
         ccm.ContractReferene,
         fcc.TenderID,
-        fcc.ContractType as Classification
+        fcc.ContractType as Classification,
+        ccm.Comments,
+        ccm.NotifiedtoContractOwner
     }
     where ccm.ContractNumber is not null
       and trim(ccm.ContractNumber) <> ''
@@ -497,7 +499,9 @@ union select from FastConditionContracts as fcc
         rebate.CreationDate as ContractCreationDate,
         rebate.SettlementID as ContractReferene,
         fcc.TenderID,
-        fcc.ContractType as Classification
+        fcc.ContractType as Classification,
+        ccm.Comments,
+        ccm.NotifiedtoContractOwner
     }
     where rebate.RebateContractNumber is not null
       and rebate.RebateContractNumber <> '';
