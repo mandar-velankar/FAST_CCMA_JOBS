@@ -68,6 +68,8 @@ entity CCMContract: cuid, managed, temporal{
   CreationDate: Date;
   Cancelled: Boolean default false;
   CancellationComment: String;
+  NotifiedtoContractOwner: String;
+  Comments: Boolean;
   CCMCustomer: Composition of CCMCustomer on CCMCustomer.CCMContract = $self;
   CCMMaterial: Composition of many CCMMaterial on CCMMaterial.CCMContract = $self;
   CurrentInvoicePrice: Composition of CurrentInvoicePrice on CurrentInvoicePrice.CCMContract = $self;
