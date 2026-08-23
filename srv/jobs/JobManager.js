@@ -27,11 +27,15 @@ class JobManager {
 
     registerJob(jobConfig) {
         //register job if not yet exists and contains a time
-        this.cronManager.exists(jobConfig.JobName) && console.log(`${jobConfig.JobName} already exists`);
-        !jobConfig.JobTime && console.log(`Job time is empty: ${jobConfig.JobTime}`);
+        if (this.cronManager.exists(jobConfig.JobName)) {
+            console.log(`[JobManager] Job already exists: ${jobConfig.JobName}`);
+        }
+        if (!jobConfig.JobTime) {
+            console.log(`[JobManager] Job time is empty, skipping: ${jobConfig.JobName}`);
+        }
 
         if (jobConfig.JobTime && !this.cronManager.exists(jobConfig.JobName)) {
-            console.log(`Adding Job : ${jobConfig.JobName} to manager`);
+            console.log(`[JobManager] Adding job: ${jobConfig.JobName}, schedule: ${jobConfig.JobTime}`);
             
             this.addJob(jobConfig);//register job using JobFactory
         }
@@ -39,45 +43,74 @@ class JobManager {
     addJob(jobConfig) {
         //register job using JobFactory
         const job = JobFactory.create(jobConfig.JobName, jobConfig.JobTime);
+        console.log(`[JobManager] Created job: ${jobConfig.JobName}`);
         this.cronManager.add(job.getJobName(), job.getJobTime(), job.onTick.bind(job));
         this.cronManager.start(job.getJobName());
+        console.log(`[JobManager] Started job: ${job.getJobName()}, schedule: ${job.getJobTime()}`);
     }
     unregisterJob(jobConfig){
-        this.cronManager.exists(jobConfig.JobName) && this.cronManager.deleteJob(jobConfig.JobName);
+        if (this.cronManager.exists(jobConfig.JobName)) {
+            this.cronManager.deleteJob(jobConfig.JobName);
+            console.log(`[JobManager] Unregistered job: ${jobConfig.JobName}`);
+        } else {
+            console.log(`[JobManager] Cannot unregister job; not found: ${jobConfig.JobName}`);
+        }
     }
 
     stopJob(JobName) {
         //stop job if exists, if no name is provided, stop all
         if(JobName){
-            this.cronManager.exists(JobName) && this.cronManager.stop(JobName);
+            if (this.cronManager.exists(JobName)) {
+                this.cronManager.stop(JobName);
+                console.log(`[JobManager] Stopped job: ${JobName}`);
+            } else {
+                console.log(`[JobManager] Cannot stop job; not found: ${JobName}`);
+            }
         }else{
             this.cronManager.stopAll();
+            console.log('[JobManager] Stopped all jobs');
         }
     }
     startJob(JobName) {
         //start job if exists, if no name is provided, start all
         if(JobName){
-            this.cronManager.exists(JobName) && this.cronManager.start(JobName);
+            if (this.cronManager.exists(JobName)) {
+                this.cronManager.start(JobName);
+                console.log(`[JobManager] Started job manually: ${JobName}`);
+            } else {
+                console.log(`[JobManager] Cannot start job; not found: ${JobName}`);
+            }
         }else{
             this.cronManager.startAll();
+            console.log('[JobManager] Started all jobs');
         }
     }
     updateJob(jobConfig) {
         //update job if exists, otherwise register as new job
         if (this.cronManager.exists(jobConfig.JobName)) {
             this.cronManager.update(jobConfig.JobName, jobConfig.JobTime);
+            console.log(`[JobManager] Updated job: ${jobConfig.JobName}, schedule: ${jobConfig.JobTime}`);
         } else {
             this.registerJob(jobConfig);
         }
     }
     async registerJobs() {
         //register all jobs from config table in database - used during startup of the app
+        console.log('[JobManager] Loading jobs from SchedulerJobConfigCCMA');
         const db = await cds.connect.to('db'); // connect to database service
-        const { SchedulerJobConfig } = db.entities("com.bayer.SXTENDER.ccma");
+        const { SchedulerJobConfigCCMA } = db.entities("com.bayer.SXTENDER.ccma");
 
-        const jobsConfig = await cds.run(SELECT.from(SchedulerJobConfig));
+        const jobsConfig = await cds.run(SELECT.from(SchedulerJobConfigCCMA));
+        console.log(`[JobManager] Found ${jobsConfig.length} job configuration(s)`);
 
-        jobsConfig.forEach((jobConfig)=>this.registerJob(jobConfig));
+        jobsConfig.forEach((jobConfig) => {
+            try {
+                this.registerJob(jobConfig);
+            } catch (error) {
+                console.error(`[JobManager] Failed to register job: ${jobConfig.JobName}`, error);
+            }
+        });
+        console.log('[JobManager] Finished registering jobs');
     }
     getJobs() {
         //list all jobs in the manager

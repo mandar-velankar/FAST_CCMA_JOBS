@@ -2,7 +2,13 @@ const cds = require('@sap/cds')
 const jobManager = require("./jobs/JobManager");
 
 cds.on('served', async (services) => {
-  jobManager.registerJobs();
+  try {
+    console.log('[JobManager] Service served; registering configured jobs');
+    await jobManager.registerJobs();
+    console.log('[JobManager] Configured jobs registered successfully');
+  } catch (error) {
+    console.error('[JobManager] Failed to register configured jobs:', error);
+  }
 
   // const CCMContractsCreatedNotificationMailJob = require("./jobs/CCMContractsCreatedNotificationMailJob");
   // new CCMContractsCreatedNotificationMailJob("test","*").onTick();
