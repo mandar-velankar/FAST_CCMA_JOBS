@@ -60,8 +60,13 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
         const { CCMContractsCreatedNotificationMailJobView} = this.db.entities('ConditionContract');
         const tx = this.db.tx();
         const dateOnly = date.toJSON().substring(0,10);
-        let conditionContracts = await tx.run(SELECT.from(CCMContractsCreatedNotificationMailJobView).where({ContractCreationDate: { '>=': dateOnly}, 
-        NotifiedtoContractOwner: true})); 
+        let conditionContracts = await tx.run(
+            SELECT.from(CCMContractsCreatedNotificationMailJobView)
+                .where({
+                    ContractCreationDate: { '>=': dateOnly },
+                    NotifiedtoContractOwner: true
+                })
+        );
         return conditionContracts;
     }
 
@@ -138,9 +143,13 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
     }
 
     async addMailsToOutbox(mail, syncDate) {
-        console.log(`Adding notification mail for CCM Contracts synchronised with SAP on: ${syncDate.toDateString()}`);
+        console.log(
+            `Adding notification mail for CCM Contracts synchronised with SAP on: ${syncDate.toDateString()}`
+        );
+
         const fastbackendAPI = await cds.connect.to("FASTBACKEND_API");
-        try{
+
+        try {
             const result = await fastbackendAPI.send({
                 method: 'POST',
                 path: `/v2/conditioncontracting/OutgoingMails`,
@@ -148,46 +157,53 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
             });
 
             return result;
-        }catch(error){
-            console.error("No mail template found");
-            return;
+        } catch (error) {
+            console.error(
+                'Failed to add notification mail to outbox',
+                error
+            );
+            throw error;
         }
-	}
+    }
 
     generateMailBody(content, data) {
         return Handlebars.compile("" + content)(data);
     }
 
-    //Avinash
+
     async updateNotificationStatus(contracts) {
 
-    if (!contracts || contracts.length === 0) {
-        return;
+        if (!contracts || contracts.length === 0) {
+            return;
+        }
+
+        const db = await cds.connect.to('db');
+        const { CCMContracts } = db.entities('ConditionContract');
+
+        for (const contract of contracts) {
+            try {
+                await db.run(
+                    UPDATE(CCMContracts)
+                        .set({
+                            NotifiedtoContractOwner: false
+                        })
+                        .where({
+                            CCMContractID: contract.CCMContractID
+                        })
+                );
+            } catch (error) {
+                console.error(
+                    `Failed to update notification status for contract ${contract.CCMContractID}`,
+                    error
+                );
+            }
+        }
+
+        console.log(
+            `${contracts.length} contract(s) marked as not notified`
+        );
     }
 
-    const db = await cds.connect.to('db');
-    const { CCMContracts } = db.entities('ConditionContract');
-
-    const contractIds = contracts.map(
-        contract => contract.CCMContractID
-    );
-
-    await db.run(
-        UPDATE(CCMContracts)
-            .set({
-                NotifiedtoContractOwner: false,
-                })
-            .where({
-                CCMContractID: {
-                    in: contractIds
-                }
-            })
-    );
-    console.log(
-        `${contractIds.length} contract(s) marked as notified`
-    );
-}
-//Avinash
 
     async getMailTemplate(templateId) {
         console.log('Get mail templates');
