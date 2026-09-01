@@ -34,6 +34,7 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
                 // console.log(mails);
                 if(mail){
                     await this.addMailsToOutbox(mail, syncDate);
+                    await this.updateNotificationStatus(synchronizedAggregatedData);
                 } else{
                     console.log(`No mail to add to outbox for template ${templateId}`);
                 }
@@ -59,7 +60,8 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
         const { CCMContractsCreatedNotificationMailJobView} = this.db.entities('ConditionContract');
         const tx = this.db.tx();
         const dateOnly = date.toJSON().substring(0,10);
-        let conditionContracts = await tx.run(SELECT.from(CCMContractsCreatedNotificationMailJobView).where({ContractCreationDate: { '>=': dateOnly}})); 
+        let conditionContracts = await tx.run(SELECT.from(CCMContractsCreatedNotificationMailJobView).where({ContractCreationDate: { '>=': dateOnly}, 
+        NotifiedtoContractOwner: true})); 
         return conditionContracts;
     }
 
@@ -155,6 +157,37 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
     generateMailBody(content, data) {
         return Handlebars.compile("" + content)(data);
     }
+
+    //Avinash
+    async updateNotificationStatus(contracts) {
+
+    if (!contracts || contracts.length === 0) {
+        return;
+    }
+
+    const db = await cds.connect.to('db');
+    const { CCMContracts } = db.entities('ConditionContract');
+
+    const contractIds = contracts.map(
+        contract => contract.CCMContractID
+    );
+
+    await db.run(
+        UPDATE(CCMContracts)
+            .set({
+                NotifiedtoContractOwner: false,
+                })
+            .where({
+                CCMContractID: {
+                    in: contractIds
+                }
+            })
+    );
+    console.log(
+        `${contractIds.length} contract(s) marked as notified`
+    );
+}
+//Avinash
 
     async getMailTemplate(templateId) {
         console.log('Get mail templates');
