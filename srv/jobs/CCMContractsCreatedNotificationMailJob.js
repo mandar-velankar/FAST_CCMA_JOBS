@@ -91,15 +91,15 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
             d.URL = `${fastUIAppHost}/app/index.html#/conditioncontract&/ccma/detail/${d.CCMContractID}`
         })
 
-        // unique creators / users by CWID (use CWID consistently)
-        const uniqueUsers = [...new Set(data.map(item => item.CWID))];
+        // unique creators / users by UserEmail (use UserEmail consistently)
+        const uniqueUsers = [...new Set(data.map(item => item.UserEmail))];
         const base64Content = template?.d?.MailTemplateFile?.content;
         const templateContent = base64Content ? Buffer.from(base64Content, 'base64') : null;
 
         const outbox = [];
 
         for (let user of uniqueUsers) {
-            let dataFilteredByUser = data.filter(d => d.CWID == user);
+            let dataFilteredByUser = data.filter(d => d.UserEmail == user);
             if(dataFilteredByUser && dataFilteredByUser.length > 0){
                 outbox.push({
                     CountryCode: dataFilteredByUser[0].CountryCode,
@@ -111,7 +111,8 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
                     MailBody: this.generateMailBody(templateContent, { 
                         data: { 
                             SyncDate: syncDate.toDateString(), 
-                            CCMContracts: dataFilteredByUser 
+                            CCMContracts: dataFilteredByUser,
+                            ContractOwner: dataFilteredByUser[0].OwnerName 
                         }
                     }),
                     Sent: false
