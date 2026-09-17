@@ -108,7 +108,7 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
     async persistNewEndDate(id, newEndDate) {
         const { CCMContract } = this.db.entities("com.bayer.SXTENDER.ccma");
         const tx = this.db.tx();
-        await tx.run(UPDATE(CCMContract).set({ CCMContractEndDate: newEndDate }).where({ ID: id }));
+        await tx.run(UPDATE(CCMContract).set({ CCMContractEndDate: newEndDate, Expired: false }).where({ ID: id }));
         await tx.commit();
 
     }

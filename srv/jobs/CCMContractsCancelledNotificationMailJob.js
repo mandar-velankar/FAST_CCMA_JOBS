@@ -26,7 +26,7 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
             const mailTemplate = await this.getMailTemplate(templateId);
 
             //get customer prices
-            const cancelledData = await this.getCancelledCCMContractsData();
+            const cancelledData = await this.getCancelledCCMContractsData(syncDate);
 
             // console.dir(pas,{ depth: null });
             if (cancelledData && cancelledData.length > 0) {
@@ -53,7 +53,7 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
      * @param {Date} date 
      * @returns {Array<Objects>}  A list of aggregated data
      */
-    async getCancelledCCMContractsData() {
+    async getCancelledCCMContractsData(date) {
         this.db = await cds.connect.to('db'); 
         console.log(`Fetching Cancelled Contracts ${date.toDateString()}`);
         const { CCMContractsCancelledNotificationMailJob} = this.db.entities('ConditionContract');
