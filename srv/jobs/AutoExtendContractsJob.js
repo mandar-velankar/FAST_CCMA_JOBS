@@ -253,20 +253,75 @@ module.exports = class AutoExtendContractsJob extends BaseJob {
         }
     }
 
-    async addMailsToOutbox(mail) {
+    async addMailsToOutbox(mails) {
+        if (!Array.isArray(mails) || mails.length === 0) {
+            return [];
+        }
+
         console.log(`Adding Extend Expiry mails for Price Agreements to outbox`);
         const fastbackendAPI = await cds.connect.to("FASTBACKEND_API");
         // const mailTemplate = await getMailTemplate(api, templateId);
         // const mappedData = mappingCB(mailTemplate?.d, data, subject, recipients);
+        const MAX_MAILS_PER_BATCH = 3;
+        const batches = [];
+
+        for (let i = 0; i < mails.length; i += MAX_MAILS_PER_BATCH) {
+            batches.push(mails.slice(i, i + MAX_MAILS_PER_BATCH));
+        }
+
+        const CONCURRENCY = 3;
+        const results = [];
+
+        for (let i = 0; i < batches.length; i += CONCURRENCY) {
+            const group = batches.slice(i, i + CONCURRENCY);
+
+            const groupResults = await Promise.all(
+                group.map(batch =>
+                    this.sendMailBatch(fastbackendAPI, batch)
+                )
+            );
+
+            results.push(...groupResults.flat());
+        }
+
+        return results;
+    }
+
+    async sendMailBatch(fastbackendAPI, batch) {
         try {
-            return await fastbackendAPI.send({
+            const result = await fastbackendAPI.send({
                 method: 'POST',
-                path: `/v2/conditioncontracting/OutgoingMails`,
-                data: mail
+                path: '/v2/conditioncontracting/OutgoingMails',
+                data: batch
             });
-        } catch (err) {
-            console.error('Error sending mails to outbox (FASTBACKEND_API):', err && err.stack ? err.stack : err);
-            throw err;
+
+            return [result];
+        } catch (error) {
+            const status =
+                error?.reason?.response?.status ??
+                error?.response?.status;
+
+            if (status === 413) {
+                if (batch.length === 1) {
+                    throw error;
+                }
+
+                const middle = Math.ceil(batch.length / 2);
+                const left = batch.slice(0, middle);
+                const right = batch.slice(middle);
+
+                const [leftResult, rightResult] = await Promise.all([
+                    this.sendMailBatch(fastbackendAPI, left),
+                    this.sendMailBatch(fastbackendAPI, right)
+                ]);
+
+                return [
+                    ...leftResult,
+                    ...rightResult
+                ];
+            }
+
+            throw error;
         }
     }
  

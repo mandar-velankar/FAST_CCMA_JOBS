@@ -150,22 +150,77 @@ module.exports = class PriceAgreementNotificationNetPriceBelowFloorJob extends B
     }
 
     async addMailsToOutbox(mails, syncDate) {
+        if (!Array.isArray(mails) || mails.length === 0) {
+            return [];
+        }
+
         console.log(`Adding notification mail for Net Price Below Floor Price sent on: ${syncDate.toDateString()}`);
         const fastbackendAPI = await cds.connect.to("FASTBACKEND_API");
-        try {
-            return fastbackendAPI.send({
-                method: 'POST',
-                path: `/v2/conditioncontracting/OutgoingMails`,
-                data: mails
-            });
-        } catch (error) {
-            console.error(error);
-            throw error;
+        const MAX_MAILS_PER_BATCH = 3;
+        const batches = [];
+
+        for (let i = 0; i < mails.length; i += MAX_MAILS_PER_BATCH) {
+            batches.push(mails.slice(i, i + MAX_MAILS_PER_BATCH));
         }
+
+        const CONCURRENCY = 3;
+        const results = [];
+
+        for (let i = 0; i < batches.length; i += CONCURRENCY) {
+            const group = batches.slice(i, i + CONCURRENCY);
+
+            const groupResults = await Promise.all(
+                group.map(batch =>
+                    this.sendMailBatch(fastbackendAPI, batch)
+                )
+            );
+
+            results.push(...groupResults.flat());
+        }
+
+        return results;
     }
 
     generateMailBody(mail, data) {
         return Handlebars.compile("" + mail.content)(data);
+    }
+
+    async sendMailBatch(fastbackendAPI, batch) {
+        try {
+            const result = await fastbackendAPI.send({
+                method: 'POST',
+                path: '/v2/conditioncontracting/OutgoingMails',
+                data: batch
+            });
+
+            return [result];
+        } catch (error) {
+            const status =
+                error?.reason?.response?.status ??
+                error?.response?.status;
+
+            if (status === 413) {
+                if (batch.length === 1) {
+                    throw error;
+                }
+
+                const middle = Math.ceil(batch.length / 2);
+                const left = batch.slice(0, middle);
+                const right = batch.slice(middle);
+
+                const [leftResult, rightResult] = await Promise.all([
+                    this.sendMailBatch(fastbackendAPI, left),
+                    this.sendMailBatch(fastbackendAPI, right)
+                ]);
+
+                return [
+                    ...leftResult,
+                    ...rightResult
+                ];
+            }
+
+            throw error;
+        }
     }
 
     async getMailTemplate(templateId) {
