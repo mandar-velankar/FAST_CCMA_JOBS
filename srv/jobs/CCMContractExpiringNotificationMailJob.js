@@ -233,29 +233,70 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
                 error?.reason?.response?.status ??
                 error?.response?.status;
 
-            if (status === 413) {
-                if (batch.length === 1) {
-                    throw error;
-                }
-
-                const middle = Math.ceil(batch.length / 2);
-
-                const left = batch.slice(0, middle);
-                const right = batch.slice(middle);
-
-                const [leftResult, rightResult] = await Promise.all([
-                    this.sendMailBatch(fastbackendAPI, left),
-                    this.sendMailBatch(fastbackendAPI, right)
-                ]);
-
-                return [
-                    ...leftResult,
-                    ...rightResult
-                ];
+            if (status !== 413) {
+                throw error;
             }
 
-            throw error;
+            if (batch.length === 1) {
+                return [await this.sendOversizedMail(batch[0])];
+            }
+
+            const middle = Math.ceil(batch.length / 2);
+
+            const left = batch.slice(0, middle);
+            const right = batch.slice(middle);
+
+            const [leftResult, rightResult] = await Promise.all([
+                this.sendMailBatch(fastbackendAPI, left),
+                this.sendMailBatch(fastbackendAPI, right)
+            ]);
+
+            return [
+                ...leftResult,
+                ...rightResult
+            ];
         }
+    }
+
+    async sendOversizedMail(mail) {
+        const fastbackendODataAPI = await cds.connect.to("FASTBACKEND_ODATA_API");
+        const { MailBody, ...metadata } = mail;
+        const bodyBytes = Buffer.from(MailBody, 'utf8');
+
+        const uploadResult = await fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/OutgoingMailBodyUploads',
+            data: {
+                ...metadata,
+                Status: 'UPLOADING',
+                MediaType: 'text/html; charset=utf-8'
+            }
+        });
+
+        const uploadId = this.extractId(uploadResult);
+        if (!uploadId) {
+            throw new Error('Outgoing mail body upload did not return an ID');
+        }
+
+        await fastbackendODataAPI.send({
+            method: 'PUT',
+            path: `/sta_tender/OutgoingMailBodyUploads/${uploadId}/Content`,
+            headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Content-Length': String(bodyBytes.length)
+            },
+            data: bodyBytes
+        });
+
+        return fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/completeMailBodyUpload',
+            data: { uploadId }
+        });
+    }
+
+    extractId(result) {
+        return result?.ID ?? result?.d?.ID ?? result?.d?.results?.[0]?.ID ?? result?.value?.ID;
     }
 };
 

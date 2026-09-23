@@ -256,39 +256,79 @@ module.exports = class CCMContractsCreatedNotificationMailJob extends BaseJob {
                 error?.reason?.response?.status ??
                 error?.response?.status;
 
-            if (status === 413) {
-                // We cannot split any further.
-                if (batch.length === 1) {
-                    const mail = batch[0];
-
-                    console.error(
-                        `Single mail is too large to send. TenderID=${mail.TenderID}, OfferID=${mail.OfferID}, size=${Buffer.byteLength(JSON.stringify(mail), 'utf8')} bytes`
-                    );
-
-                    throw error;
-                }
-
-                const middle = Math.ceil(batch.length / 2);
-
-                const left = batch.slice(0, middle);
-                const right = batch.slice(middle);
-
-                console.warn(
-                    `Batch of ${batch.length} mails is too large. Splitting into ${left.length} + ${right.length}.`
-                );
-
-                const [leftResult, rightResult] = await Promise.all([
-                    this.sendMailBatch(fastbackendAPI, left),
-                    this.sendMailBatch(fastbackendAPI, right)
-                ]);
-
-                return [
-                    ...leftResult,
-                    ...rightResult
-                ];
+            if (status !== 413) {
+                throw error;
             }
 
-            throw error;
+            if (batch.length === 1) {
+                const mail = batch[0];
+
+                console.warn(
+                    `Single mail is too large for JSON transport. Uploading body instead. TenderID=${mail.TenderID}, OfferID=${mail.OfferID}, size=${Buffer.byteLength(JSON.stringify(mail), 'utf8')} bytes`
+                );
+
+                return [await this.sendOversizedMail(mail)];
+            }
+
+            const middle = Math.ceil(batch.length / 2);
+
+            const left = batch.slice(0, middle);
+            const right = batch.slice(middle);
+
+            console.warn(
+                `Batch of ${batch.length} mails is too large. Splitting into ${left.length} + ${right.length}.`
+            );
+
+            const [leftResult, rightResult] = await Promise.all([
+                this.sendMailBatch(fastbackendAPI, left),
+                this.sendMailBatch(fastbackendAPI, right)
+            ]);
+
+            return [
+                ...leftResult,
+                ...rightResult
+            ];
         }
+    }
+
+    async sendOversizedMail(mail) {
+        const fastbackendODataAPI = await cds.connect.to("FASTBACKEND_ODATA_API");
+        const { MailBody, ...metadata } = mail;
+        const bodyBytes = Buffer.from(MailBody, 'utf8');
+
+        const uploadResult = await fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/OutgoingMailBodyUploads',
+            data: {
+                ...metadata,
+                Status: 'UPLOADING',
+                MediaType: 'text/html; charset=utf-8'
+            }
+        });
+
+        const uploadId = this.extractId(uploadResult);
+        if (!uploadId) {
+            throw new Error('Outgoing mail body upload did not return an ID');
+        }
+
+        await fastbackendODataAPI.send({
+            method: 'PUT',
+            path: `/sta_tender/OutgoingMailBodyUploads/${uploadId}/Content`,
+            headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Content-Length': String(bodyBytes.length)
+            },
+            data: bodyBytes
+        });
+
+        return fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/completeMailBodyUpload',
+            data: { uploadId }
+        });
+    }
+
+    extractId(result) {
+        return result?.ID ?? result?.d?.ID ?? result?.d?.results?.[0]?.ID ?? result?.value?.ID;
     }
 };
