@@ -115,19 +115,86 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
     async addMailsToOutbox(mail, syncDate) {
         console.log(`Adding notification mail for CCM Contracts synchronised with SAP on: ${syncDate.toDateString()}`);
         const fastbackendAPI = await cds.connect.to("FASTBACKEND_API");
-        try{
+        return this.sendMailBatch(
+            fastbackendAPI,
+            Array.isArray(mail) ? mail : [mail]
+        );
+	}
+
+    async sendMailBatch(fastbackendAPI, batch) {
+        try {
             const result = await fastbackendAPI.send({
                 method: 'POST',
-                path: `/v2/conditioncontracting/OutgoingMails`,
-                data: mail
+                path: '/v2/conditioncontracting/OutgoingMails',
+                data: batch
             });
 
-            return result;
-        }catch(error){
-            console.error("No mail template found");
-            return;
+            return [result];
+        } catch (error) {
+            const status = error?.reason?.response?.status ?? error?.response?.status;
+
+            if (status !== 413) {
+                throw error;
+            }
+
+            if (batch.length > 1) {
+                const middle = Math.ceil(batch.length / 2);
+                const [leftResult, rightResult] = await Promise.all([
+                    this.sendMailBatch(fastbackendAPI, batch.slice(0, middle)),
+                    this.sendMailBatch(fastbackendAPI, batch.slice(middle))
+                ]);
+
+                return [...leftResult, ...rightResult];
+            }
+
+            return [await this.sendOversizedMail(batch[0])];
         }
-	}
+    }
+
+    async sendOversizedMail(mail) {
+        const fastbackendODataAPI = await cds.connect.to("FASTBACKEND_ODATA_API");
+        const { MailBody, ...metadata } = mail;
+        const bodyBytes = Buffer.from(MailBody, 'utf8');
+
+        console.warn(
+            `Uploading oversized mail body: bytes=${bodyBytes.length}, TenderID=${mail.TenderID}, OfferID=${mail.OfferID}`
+        );
+
+        const uploadResult = await fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/OutgoingMailBodyUploads',
+            data: {
+                ...metadata,
+                Status: 'UPLOADING',
+                MediaType: 'text/html; charset=utf-8'
+            }
+        });
+
+        const uploadId = this.extractId(uploadResult);
+        if (!uploadId) {
+            throw new Error('Outgoing mail body upload did not return an ID');
+        }
+
+        await fastbackendODataAPI.send({
+            method: 'PUT',
+            path: `/sta_tender/OutgoingMailBodyUploads/${uploadId}/Content`,
+            headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Content-Length': String(bodyBytes.length)
+            },
+            data: bodyBytes
+        });
+
+        return fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/completeMailBodyUpload',
+            data: { uploadId }
+        });
+    }
+
+    extractId(result) {
+        return result?.ID ?? result?.d?.ID ?? result?.d?.results?.[0]?.ID ?? result?.value?.ID;
+    }
 
     generateMailBody(content, data) {
         return Handlebars.compile("" + content)(data);

@@ -52,6 +52,12 @@
           "destination": "FAST_API_OAUTH"
         }
       },
+      "FASTBACKEND_ODATA_API": {
+        "kind": "odata",
+        "credentials": {
+          "destination": "FAST_API_OAUTH"
+        }
+      },
       "ConditionContract": {
         "kind": "odata",
         "credentials": {

@@ -113,19 +113,37 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
     };
 
     async addMailsToOutbox(mails, expiryDate) {
+        if (!Array.isArray(mails) || mails.length === 0) {
+            return [];
+        }
+
         console.log(`Adding reminder mails for CCM Contracts to outbox for expiry date: ${expiryDate}`);
         console.table(mails,['CountryCode','TenderID','OfferID','Sender','Recipients','Subject','Sent']);
-        const fastbackendAPI = await cds.connect.to("FASTBACKEND_API");
-        try {
-            return fastbackendAPI.send({
-                method: 'POST',
-                path: `/v2/conditioncontracting/OutgoingMails`,
-                data: mails
-            });
-        } catch (error) {
-            console.error(error);
-            throw error;
+        const fastbackendAPI = await cds.connect.to('FASTBACKEND_API');
+
+        const MAX_MAILS_PER_BATCH = 3;
+        const batches = [];
+
+        for (let i = 0; i < mails.length; i += MAX_MAILS_PER_BATCH) {
+            batches.push(mails.slice(i, i + MAX_MAILS_PER_BATCH));
         }
+
+        const CONCURRENCY = 3;
+        const results = [];
+
+        for (let i = 0; i < batches.length; i += CONCURRENCY) {
+            const group = batches.slice(i, i + CONCURRENCY);
+
+            const groupResults = await Promise.all(
+                group.map(batch =>
+                    this.sendMailBatch(fastbackendAPI, batch)
+                )
+            );
+
+            results.push(...groupResults.flat());
+        }
+
+        return results;
     }
     generateMailBody(mail, data) {
         //CountryCode: language, Language: language, 
@@ -198,6 +216,87 @@ class CCMContractExpiringNotificationMailJob extends BaseJob {
         }
         await tx.commit();
         console.log(`Updating Expiring Soon Fast Condition Contrats Finished`);
+    }
+
+    async sendMailBatch(fastbackendAPI, batch) {
+        try {
+            const result = await fastbackendAPI.send({
+                method: 'POST',
+                path: '/v2/conditioncontracting/OutgoingMails',
+                data: batch
+            });
+
+            return [result];
+
+        } catch (error) {
+            const status =
+                error?.reason?.response?.status ??
+                error?.response?.status;
+
+            if (status !== 413) {
+                throw error;
+            }
+
+            if (batch.length === 1) {
+                return [await this.sendOversizedMail(batch[0])];
+            }
+
+            const middle = Math.ceil(batch.length / 2);
+
+            const left = batch.slice(0, middle);
+            const right = batch.slice(middle);
+
+            const [leftResult, rightResult] = await Promise.all([
+                this.sendMailBatch(fastbackendAPI, left),
+                this.sendMailBatch(fastbackendAPI, right)
+            ]);
+
+            return [
+                ...leftResult,
+                ...rightResult
+            ];
+        }
+    }
+
+    async sendOversizedMail(mail) {
+        const fastbackendODataAPI = await cds.connect.to("FASTBACKEND_ODATA_API");
+        const { MailBody, ...metadata } = mail;
+        const bodyBytes = Buffer.from(MailBody, 'utf8');
+
+        const uploadResult = await fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/OutgoingMailBodyUploads',
+            data: {
+                ...metadata,
+                Status: 'UPLOADING',
+                MediaType: 'text/html; charset=utf-8'
+            }
+        });
+
+        const uploadId = this.extractId(uploadResult);
+        if (!uploadId) {
+            throw new Error('Outgoing mail body upload did not return an ID');
+        }
+
+        await fastbackendODataAPI.send({
+            method: 'PUT',
+            path: `/sta_tender/OutgoingMailBodyUploads/${uploadId}/Content`,
+            headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Content-Length': String(bodyBytes.length)
+            },
+            data: bodyBytes
+        });
+
+        return fastbackendODataAPI.send({
+            method: 'POST',
+            path: '/sta_tender/completeMailBodyUpload',
+            data: { uploadId }
+        });
+    }
+
+    extractId(result) {
+        return result?.ID ?? result?.d?.ID ?? result?.d?.results?.[0]?.ID ?? result?.value?.ID;
     }
 };
 
