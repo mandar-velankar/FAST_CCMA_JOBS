@@ -64,7 +64,7 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
         const tx = this.db.tx();
         let cancelledContracts = await tx.run(
             SELECT.from(CCMContractsCancelledNotificationMailJob)
-                .where({ ExpiryDate: this.terminationDate })
+                .where({ modifiedAt: this.terminationDate })
         );
         return cancelledContracts;
     }
