@@ -62,9 +62,10 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
         console.log(`Fetching Cancelled Contracts ${date.toDateString()}`);
         const { CCMContractsCancelledNotificationMailJob} = this.db.entities('ConditionContract');
         const tx = this.db.tx();
+        const dateOnly = date.toJSON().substring(0,10);
         let cancelledContracts = await tx.run(
             SELECT.from(CCMContractsCancelledNotificationMailJob)
-                .where({ modifiedAt: this.terminationDate })
+                .where({ modifiedAt: dateOnly })
         );
         return cancelledContracts;
     }
