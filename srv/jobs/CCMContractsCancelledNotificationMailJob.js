@@ -8,6 +8,7 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
 
     constructor(jobName, jobTime) {
         super(jobName, jobTime);
+        this.terminationDate = null;
     }
 
     /**
@@ -17,6 +18,9 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
     async onTick() {
 
         const syncDate = new Date();
+        this.terminationDate = new Date(syncDate);
+        this.terminationDate.setDate(this.terminationDate.getDate() - 1);
+        this.terminationDate = this.terminationDate.toJSON().substring(0, 10);
         console.log(`Processing notification mail for Cancelled CCM Contracts ${syncDate.toDateString()} STARTED ... `);
 
         try {           
@@ -58,7 +62,25 @@ module.exports = class CCMContractsCancelledNotificationMailJob extends BaseJob 
         console.log(`Fetching Cancelled Contracts ${date.toDateString()}`);
         const { CCMContractsCancelledNotificationMailJob} = this.db.entities('ConditionContract');
         const tx = this.db.tx();
-        let cancelledContracts = await tx.run(SELECT.from(CCMContractsCancelledNotificationMailJob)); 
+
+        const startOfToday = new Date(date);
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const startOfTomorrow = new Date(startOfToday);
+        startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
+        const cancelledContracts = await tx.run(
+            SELECT.from(CCMContractsCancelledNotificationMailJob)
+                .where([
+                    { ref: ['modifiedAt'] },
+                    '>=',
+                    { val: startOfToday },
+                    'and',
+                    { ref: ['modifiedAt'] },
+                    '<',
+                    { val: startOfTomorrow }
+                ])
+        );
         return cancelledContracts;
     }
 
